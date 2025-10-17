@@ -1,0 +1,265 @@
+/* ----------------------------------- */
+/* 核心樣式 Reset & 背景 */
+/* ----------------------------------- */
+body {
+    font-family: '微軟正黑體', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f7ff; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* ----------------------------------- */
+/* 主要容器 (Container) */
+/* ----------------------------------- */
+.container {
+    background: linear-gradient(145deg, #ffffff, #e6f0f7); 
+    padding: 35px 45px;
+    border-radius: 20px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15), 
+                0 0 0 10px rgba(0, 123, 255, 0.05); 
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    transition: transform 0.3s ease;
+}
+
+h1 {
+    color: #007bff; 
+    margin-bottom: 25px;
+    font-size: 1.8em;
+    font-weight: 600;
+}
+
+/* ----------------------------------- */
+/* 遊戲化視覺區 (Watering Game) */
+/* ----------------------------------- */
+.watering-game-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end; 
+    margin: 30px 0;
+    height: 180px; 
+}
+
+/* 1. 水桶區樣式 */
+.water-bucket-wrapper {
+    position: relative;
+    width: 80px;
+    height: 150px;
+    background-color: transparent;
+    border-radius: 5px 5px 20px 20px;
+    overflow: hidden;
+}
+
+.bucket-outline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 5px solid #a0a0a0; 
+    border-top: 10px solid #888;
+    border-radius: 5px 5px 20px 20px;
+    box-sizing: border-box;
+}
+
+.water-level {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0%; 
+    background: linear-gradient(to top, #007bff, #4dc3ff); 
+    transition: height 0.8s ease-out; 
+    border-radius: 0 0 15px 15px;
+}
+
+/* 2. 花朵區樣式 */
+.flower-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    width: 150px;
+    height: 100%;
+}
+
+/* 花園容器樣式：讓多朵花可以排列 */
+.flower-garden {
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center;
+    align-content: flex-start;
+    width: 100%;
+    height: 150px; 
+    overflow-y: auto; /* 允許捲動 */
+    padding: 5px;
+    border: 1px dashed #c4d7e9; /* 虛線邊框 */
+    background-color: #f7fff7; /* 淺綠色背景模擬泥土 */
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+/* 花朵單元樣式 */
+.flower-unit {
+    font-size: 2em; 
+    margin: 3px;
+    cursor: default;
+    line-height: 1;
+}
+
+#gardenMessage {
+    font-size: 0.9em;
+    color: #999;
+    padding-top: 50px;
+}
+
+#waterFlowerBtn {
+    padding: 10px 15px;
+    background-color: #28a745; 
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+#waterFlowerBtn:hover:not(:disabled) {
+    background-color: #1e7e34;
+}
+
+#waterFlowerBtn:disabled {
+    background-color: #cccccc; 
+    cursor: not-allowed;
+}
+
+
+/* ----------------------------------- */
+/* 數據顯示與輸入區 (優化樣式) */
+/* ----------------------------------- */
+.goal-text {
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+#currentIntakeDisplay {
+    color: #00a040; 
+    font-size: 2.2em; 
+    margin: 15px 0 20px 0;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.summary-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    padding: 15px 0;
+    background-color: #e6f7ff;
+    border-radius: 12px;
+    border: 1px solid #cceeff;
+}
+
+.summary-stats p {
+    font-size: 0.85em;
+    color: #666;
+    margin: 0;
+    line-height: 1.2;
+    padding: 0 5px;
+}
+
+.summary-stats span {
+    display: block;
+    font-weight: bold;
+    color: #0056b3; 
+    font-size: 1.2em;
+    margin-top: 5px;
+}
+
+.input-area {
+    margin-top: 30px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    background-color: #f8fcfd;
+    border-radius: 12px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+}
+
+.input-area label {
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+}
+
+#waterAmount {
+    padding: 12px;
+    border: 1px solid #cceeff;
+    border-radius: 10px;
+    font-size: 1.1em;
+    width: 80px;
+    text-align: center;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+#waterAmount:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    outline: none;
+}
+
+#addWaterBtn {
+    padding: 12px 20px;
+    background: linear-gradient(180deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
+    transition: all 0.2s ease;
+}
+
+#addWaterBtn:hover {
+    background: linear-gradient(180deg, #0056b3, #004494);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 123, 255, 0.5);
+}
+
+#undoBtn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background-color: #adb5bd; 
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.2em;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+#undoBtn:hover {
+    background-color: #6c757d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.reset-info {
+    font-size: 0.75em;
+    color: #999;
+    margin-top: 20px;
+}
