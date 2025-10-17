@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero — 每日喝水紀錄 (整合版)</title>
+<title>WaterHero — 每日喝水紀錄 (終極整合版)</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -19,6 +19,67 @@
   .badge-anim { width: 92px; height: 92px; }
   /* 進度條漣漪效果 */
   .progress-wave { background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0)); }
+  
+  /* ------------------- 遊戲化區塊 CSS ------------------- */
+  .water-bucket-wrapper {
+      position: relative;
+      width: 80px;
+      height: 150px;
+      border-radius: 5px 5px 20px 20px;
+      overflow: hidden;
+  }
+  .bucket-outline {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 5px solid #a0a0a0; 
+      border-top: 10px solid #888;
+      border-radius: 5px 5px 20px 20px;
+      box-sizing: border-box;
+      pointer-events: none; /* 確保點擊可以穿透 */
+  }
+  .water-level {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 0%; 
+      background: linear-gradient(to top, #007bff, #4dc3ff); 
+      transition: height 0.8s ease-out; 
+      border-radius: 0 0 15px 15px;
+  }
+  .flower-garden {
+      display: flex; 
+      flex-wrap: wrap; 
+      justify-content: center;
+      align-content: flex-start;
+      width: 100%;
+      height: 150px; 
+      overflow-y: auto; 
+      padding: 5px;
+      border: 1px dashed #c4d7e9; 
+      background-color: #f7fff7; 
+      border-radius: 10px;
+      margin-bottom: 10px;
+  }
+  .dark .flower-garden {
+      background-color: #1a202c;
+      border-color: #4a5568;
+  }
+  .flower-unit {
+      font-size: 2em; 
+      margin: 3px;
+      cursor: default;
+      line-height: 1;
+  }
+  #gardenMessage {
+      font-size: 0.9em;
+      color: #999;
+      padding-top: 50px;
+  }
+  /* ------------------- END 遊戲化區塊 CSS ------------------- */
 </style>
 </head>
 <body class="bg-gradient-to-b from-sky-50 to-white dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 min-h-screen">
@@ -56,162 +117,4 @@
         <input id="addInput" type="number" min="1" placeholder="輸入喝水量 (例如 250)" class="flex-1 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         <select id="unitSelect" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
           <option value="ml">ml</option>
-          <option value="cup">杯 (250ml)</option>
-        </select>
-        <button id="addBtn" class="px-4 py-3 rounded-lg bg-sky-600 text-white">加入</button>
-        <button id="undoBtn" class="px-3 py-3 rounded-lg bg-red-500 text-white" title="撤銷上一筆記錄">↶</button>
-      </div>
-    </section>
-
-    <section class="p-4 rounded-2xl glass shadow grid gap-3">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="text-sm text-slate-500 dark:text-slate-300">每日目標 (ml)</div>
-          <input id="goalInput" type="number" min="100" class="p-2 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" value="2000">
-        </div>
-        <div class="text-right">
-          <div class="text-sm text-slate-500 dark:text-slate-300">提醒間隔</div>
-          <div class="flex gap-2 mt-1">
-            <input id="reminderMinutes" type="number" min="10" value="120" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 w-24"> <div class="self-center text-sm">分鐘</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex gap-2">
-        <button id="saveSettings" class="px-4 py-2 rounded-lg bg-green-600 text-white">儲存設定</button>
-        <button id="resetToday" class="px-4 py-2 rounded-lg bg-amber-500 text-white">重設今日</button>
-        <button id="exportBtn" class="px-4 py-2 rounded-lg bg-slate-600 text-white">匯出資料</button>
-      </div>
-      <div class="text-sm text-slate-500 dark:text-slate-300">說明：提醒需允許瀏覽器通知；資料存於本機，不會上傳。</div>
-    </section>
-
-    <section class="p-4 rounded-2xl glass shadow">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold">過去 7 天紀錄</h3>
-        <div class="text-sm text-slate-500 dark:text-slate-300">查看趨勢以作為行為調整依據</div>
-      </div>
-      <canvas id="weekChart" height="140"></canvas>
-      <div id="historyList" class="mt-3 text-sm text-slate-700 dark:text-slate-300"></div>
-    </section>
-
-    <section class="p-4 rounded-2xl glass shadow grid gap-3">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="text-sm text-slate-500 dark:text-slate-300">水瓶名稱</div>
-          <input id="bottleName" class="p-2 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="為你的水瓶命名">
-        </div>
-        <div class="text-right">
-          <div class="text-sm text-slate-500 dark:text-slate-300">等級</div>
-          <div class="text-lg font-bold" id="bottleLevel">Lv.1</div>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-6">
-        <div id="badgeContainer" class="badge-anim"></div>
-        <div>
-          <div class="text-sm text-slate-500 dark:text-slate-300">連續達標 (streak)</div>
-          <div class="text-2xl font-bold" id="streakCount">0</div>
-          <div class="text-sm text-slate-500 dark:text-slate-300 mt-1" id="streakHint">連續達成每日目標可提升等級並解鎖徽章</div>
-        </div>
-      </div>
-
-      <div class="flex gap-2">
-        <button id="claimBadge" class="px-4 py-2 rounded-lg bg-indigo-600 text-white">領取徽章（達成時可點）</button>
-        <button id="resetAll" class="px-4 py-2 rounded-lg bg-red-600 text-white">重設所有資料</button>
-      </div>
-    </section>
-
-    <footer class="text-xs text-slate-500 dark:text-slate-400 mt-4">
-      說明：本系統以「最低阻力紀錄」為原則；提醒在分頁開啟狀態下有效；若需離線背景推播，建議升級為 PWA 或串接伺服器 Push。
-    </footer>
-  </main>
-</div>
-
-<script>
-/*
-  WaterHero — 整合單檔案版本 (v2)
-  功能：
-    - 每日喝水量紀錄、目標、單位切換
-    - 七日圖表、歷史清單
-    - 提醒、暗/亮主題切換
-    - 遊戲化：streak、徽章、命名、等級
-    - **新增：撤銷上一筆記錄 (限制連續點擊)**
-
-  資料結構（存於 localStorage, key = "waterhero_v1"）:
-  {
-    settings: { goal: 2000, unit: 'ml', reminderMinutes: 120, theme: 'light' },
-    data: { '2025-10-17': 1250, '2025-10-16': 2000, ... }, // Daily Totals
-    meta: { bottleName: '...', streak: 3, lastAchieved: '2025-10-16', level: 2, badges: [] }
-  }
-*/
-
-// ----------------- utility -----------------
-const LS_KEY = 'waterhero_v1';
-const MILLI_PER_DAY = 24*3600*1000;
-
-function isoDate(d = new Date()){
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().split('T')[0];
-}
-function loadState(){
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return defaultState();
-    const s = JSON.parse(raw);
-    return {...defaultState(), ...s}; // merge for forward compat
-  } catch(e) { console.error(e); return defaultState(); }
-}
-function saveState(){
-  localStorage.setItem(LS_KEY, JSON.stringify(state));
-}
-function defaultState(){
-  return {
-    settings: { goal: 2000, unit: 'ml', reminderMinutes: 120, theme: 'light' },
-    // data 結構為每日總量，不儲存單筆記錄
-    data: {}, 
-    meta: { bottleName: '', streak: 0, lastAchieved: null, level: 1, badges: [], dailyIntakes: {} } // dailyIntakes: { '2025-10-17': [250, 500, ...] }
-  };
-}
-
-// ----------------- app state -----------------
-let state = loadState();
-// 新增狀態：用來限制只能撤銷最近一次輸入
-let canUndo = false; 
-
-// ----------------- DOM refs -----------------
-const todayKey = () => isoDate();
-const goalDisplay = document.getElementById('goalDisplay');
-const todayTotalEl = document.getElementById('todayTotal');
-const progressBar = document.getElementById('progressBar');
-const addInput = document.getElementById('addInput');
-const addBtn = document.getElementById('addBtn');
-const unitSelect = document.getElementById('unitSelect');
-const unitLabel = document.getElementById('unitLabel');
-const unitLabel2 = document.getElementById('unitLabel2');
-const goalInput = document.getElementById('goalInput');
-const saveSettings = document.getElementById('saveSettings');
-const resetTodayBtn = document.getElementById('resetToday');
-const weekChartCtx = document.getElementById('weekChart');
-const historyList = document.getElementById('historyList');
-const reminderMinutesInput = document.getElementById('reminderMinutes');
-const notifyBtn = document.getElementById('notifyBtn');
-const exportBtn = document.getElementById('exportBtn');
-const themeToggle = document.getElementById('themeToggle');
-
-const bottleNameInput = document.getElementById('bottleName');
-const bottleLevelEl = document.getElementById('bottleLevel');
-const streakCountEl = document.getElementById('streakCount');
-const badgeContainer = document.getElementById('badgeContainer');
-const claimBadgeBtn = document.getElementById('claimBadge');
-const resetAllBtn = document.getElementById('resetAll');
-const undoBtn = document.getElementById('undoBtn'); // 新增撤銷按鈕引用
-
-// ----------------- initialization -----------------
-function init(){
-  // apply settings UI
-  goalInput.value = state.settings.goal;
-  unitSelect.value = state.settings.unit;
-  reminderMinutesInput.value = state.settings.reminderMinutes;
-  bottleNameInput.value = state.meta.bottleName || '';
-  applyTheme(state.settings.theme);
-
-  // render today
+          <option
