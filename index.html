@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v2.5 — 每日喝水紀錄（最終穩定版）</title>
+<title>WaterHero v2.6 — 每日喝水紀錄（極限適配版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -45,16 +45,23 @@
         box-shadow: 0 6px 18px rgba(0,0,0,0.2); 
         font-size:14px; 
     }
-
-    /* 關鍵修復：確保主容器不會產生溢出 */
+    /* 最終極限優化：防止頁面溢出 */
     body {
-        overflow-x: hidden;
+        overflow-x: hidden !important;
     }
-    .max-w-3xl {
-        width: 100%; /* 強制主內容佔滿寬度 */
+    /* 確保主容器在手機上強制佔滿，不溢出 */
+    .max-w-3xl.mx-auto.p-6 {
+        max-width: 100% !important;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        box-sizing: border-box;
     }
-    .p-6 {
-        padding: 1.5rem 1rem; /* 手機上略微縮小左右間距 */
+    /* 讓內容在桌面版本上保持間距，手機上緊湊 */
+    @media (min-width: 768px) {
+        .max-w-3xl.mx-auto.p-6 {
+            max-width: 1024px !important;
+            padding: 1.5rem;
+        }
     }
 </style>
 </head>
@@ -72,7 +79,7 @@
     </div>
   </header>
 
-  <main class="grid gap-4 md:grid-cols-2">
+    <main class="grid gap-4 md:grid-cols-2">
     <form id="addForm" onsubmit="event.preventDefault();" novalidate class="md:col-span-2"> 
     <section class="p-4 rounded-2xl glass shadow">
         <div class="flex justify-between items-center mb-3">
@@ -176,6 +183,7 @@
           <div class="flex gap-2 mt-1">
             <input id="reminderMinutes" type="number" min="10" value="120" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 w-24">
             <div class="self-center text-sm">分鐘</div>
+          </div>
         </div>
       </div>
 
@@ -207,6 +215,7 @@ const FINAL_FLOWER_ICON = "🌸";
 /* ---------- Helpers ---------- */
 function isoDate(d = new Date()){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().split('T')[0]; }
 function showToast(msg, timeout = 3000){ console.log("TOAST:", msg); } // 訊息導向 Console
+
 
 /* ---------- state + persistence ---------- */
 function defaultState(){
@@ -310,11 +319,10 @@ function popLastIntake(dateKey){
 
 /* ---------- actions ---------- */
 function onAdd(){
-  if(!addInput) return; // 確保元素存在
+  if(!addInput) return;
   
   const raw = parseFloat(addInput.value);
-  // 這裡進行純 JS 驗證
-  if (!raw || raw <= 0) { console.log('錯誤: 輸入數字必須大於 0'); return; }
+  if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; }
   let addMl = raw;
   if (unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
 
@@ -328,9 +336,8 @@ function onAdd(){
   if (prevTotal < state.settings.goal && newTotal >= state.settings.goal){
     onAchieveToday();
   } else {
-    console.log(`已新增 ${addMl} ml`); // 訊息導向 Console
+    console.log(`已新增 ${addMl} ml`);
   }
-  // 每次成功加入後，更新提醒時間
   state.meta.lastReminderTime = Date.now();
 }
 
@@ -349,7 +356,6 @@ function onUndo(){
     render();
     console.log(`已撤銷 ${popped} ml`);
   }
-  // 每次成功撤銷後，更新提醒時間
   state.meta.lastReminderTime = Date.now();
 }
 
