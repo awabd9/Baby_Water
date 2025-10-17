@@ -264,6 +264,7 @@ const todayTotalEl = document.getElementById('todayTotal');
 const progressBar = document.getElementById('progressBar');
 const addInput = document.getElementById('addInput');
 const addBtn = document.getElementById('addBtn');
+const undoBtn = document.getElementById('undoBtn');
 const unitSelect = document.getElementById('unitSelect');
 const unitLabel = document.getElementById('unitLabel');
 const unitLabel2 = document.getElementById('unitLabel2');
@@ -276,7 +277,6 @@ const reminderMinutesInput = document.getElementById('reminderMinutes');
 const notifyBtn = document.getElementById('notifyBtn');
 const exportBtn = document.getElementById('exportBtn');
 const themeToggle = document.getElementById('themeToggle');
-const undoBtn = document.getElementById('undoBtn');
 
 const bottleNameInput = document.getElementById('bottleName');
 const bottleLevelEl = document.getElementById('bottleLevel');
@@ -725,7 +725,10 @@ setInterval(()=> {
 }, 60*1000);
 
 // ----------------- init + first render -----------------
-init();
+// 使用 window.onload 確保所有 DOM 元素和外部 CDN 程式庫都完全載入後才啟動
+window.onload = () => {
+    init();
+};
 </script>
 </body>
 </html>
