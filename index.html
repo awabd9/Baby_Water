@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero — 每日喝水紀錄 (終極修復版)</title>
+<title>WaterHero — 每日喝水紀錄 (終極穩定版)</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -273,11 +273,7 @@ const saveSettings = document.getElementById('saveSettings');
 const resetTodayBtn = document.getElementById('resetToday');
 const weekChartCtx = document.getElementById('weekChart');
 const historyList = document.getElementById('historyList');
-const reminderMinutesInput = document.getElementById('reminderMinutes');
-// const notifyBtn = document.getElementById('notifyBtn'); // 移到 onload 範圍
-// const themeToggle = document.getElementById('themeToggle'); // 移到 onload 範圍
 const exportBtn = document.getElementById('exportBtn');
-
 
 const bottleNameInput = document.getElementById('bottleName');
 const bottleLevelEl = document.getElementById('bottleLevel');
@@ -309,18 +305,24 @@ function init(){
   if (!state.meta.dailyIntakes[todayKey()]) state.meta.dailyIntakes[todayKey()] = [];
   render();
 
-  // events
-  addBtn.addEventListener('click', onAdd);
-  addInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') onAdd(); });
-  saveSettings.addEventListener('click', onSaveSettings);
-  resetTodayBtn.addEventListener('click', onResetToday);
-  unitSelect.addEventListener('change', onUnitChange);
-  exportBtn.addEventListener('click', onExport);
-  bottleNameInput.addEventListener('change', onBottleNameChange);
-  claimBadgeBtn.addEventListener('click', onClaimBadge);
-  resetAllBtn.addEventListener('click', onResetAll);
-  undoBtn.addEventListener('click', onUndo); 
-  waterFlowerBtn.addEventListener('click', onWaterFlower); 
+  // ------------------- 事件綁定 (核心修復區) -------------------
+  // 檢查每個按鈕元素，確保非空，再綁定
+  if (addBtn) addBtn.addEventListener('click', onAdd);
+  if (addInput) addInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') onAdd(); });
+  if (undoBtn) undoBtn.addEventListener('click', onUndo); 
+  
+  if (saveSettings) saveSettings.addEventListener('click', onSaveSettings);
+  if (resetTodayBtn) resetTodayBtn.addEventListener('click', onResetToday);
+  if (unitSelect) unitSelect.addEventListener('change', onUnitChange);
+  if (exportBtn) exportBtn.addEventListener('click', onExport);
+  
+  if (bottleNameInput) bottleNameInput.addEventListener('change', onBottleNameChange);
+  if (claimBadgeBtn) claimBadgeBtn.addEventListener('click', onClaimBadge);
+  if (resetAllBtn) resetAllBtn.addEventListener('click', onResetAll);
+  
+  if (waterFlowerBtn) waterFlowerBtn.addEventListener('click', onWaterFlower); // 澆花按鈕
+
+  // ------------------- /事件綁定 -------------------
 
   startReminderTimerIfNeeded();
   initBadgeAnimation();
@@ -692,9 +694,37 @@ function playBadgeUnlock(){
 }
 
 // ----------------- theme toggle -----------------
-// 移到這裡來確保能在 window.onload 裡被綁定
-// ----------------- init + first render -----------------
+function onToggleTheme(){
+  const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+  applyTheme(next);
+}
 
+async function onRequestNotify(){
+  if (!('Notification' in window)) { alert('此瀏覽器不支援 Web Notifications'); return; }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    alert('已取得通知權限（提醒將在本分頁開啟時生效；如需背景提醒請考慮 PWA/Server Push）');
+    showNotification('提醒已啟用', 'WaterHero 已啟用喝水提醒（只在分頁開啟時有效）');
+  } else {
+    alert('未取得通知權限，無法啟用提醒');
+  }
+}
+
+function showNotification(title, body){
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    const n = new Notification(title, { body: body, icon: null });
+    n.onclick = () => window.focus();
+  } catch(e) { console.warn('通知失敗', e); }
+}
+
+// ----------------- periodic UI updater -----------------
+setInterval(()=> {
+  updateChart();
+}, 60*1000);
+
+// ----------------- init + first render -----------------
 // 使用 window.onload 確保所有 DOM 元素和外部 CDN 程式庫都完全載入後才啟動
 window.onload = () => {
     // 獨立獲取和綁定這兩個容易失敗的按鈕
