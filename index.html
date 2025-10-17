@@ -3,13 +3,20 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v2.7 — 每日喝水紀錄（最終穩定版）</title>
+<title>WaterHero v2.8 — 每日喝水紀錄（佈局最終修復版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lottie-web@5.10.1/build/player/lottie.min.js"></script>
 
 <style>
+    /* 全局 CSS 重置：強制使用 Border-Box 模型以解決溢出問題 */
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+    
   .glass { backdrop-filter: blur(6px); background: rgba(255,255,255,0.65); }
   .dark .glass { background: rgba(17,24,39,0.55); }
   .badge-anim { width: 92px; height: 92px; }
@@ -47,7 +54,7 @@
     }
     /* 最終極限優化：防止頁面溢出 */
     body {
-        overflow-x: hidden !important;
+        overflow-x: hidden !important; /* 確保主體不會橫向捲動 */
     }
     /* 確保主容器在手機上強制佔滿，且不溢出 */
     .max-w-3xl.mx-auto.p-6 {
@@ -55,7 +62,7 @@
         width: 100%;
         padding-left: 1rem; /* 較小的左右內邊距 */
         padding-right: 1rem;
-        box-sizing: border-box;
+        box-sizing: border-box; /* 確保 padding 不會增加寬度 */
     }
     /* 桌面版寬度保持原樣 */
     @media (min-width: 768px) {
@@ -74,7 +81,7 @@
 <div class="max-w-3xl mx-auto p-6">
   <header class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v2.7 💧</h1>
+      <h1 class="text-2xl font-semibold">WaterHero v2.8 💧</h1>
     </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
