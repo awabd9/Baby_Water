@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v1.5 — 每日喝水紀錄（最終穩定版）</title>
+<title>WaterHero v1.6 — 每日喝水紀錄（無干擾最終版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -23,8 +23,7 @@
   .dark .flower-garden { background:#1a202c; border-color:#4a5568; }
   .flower-unit { font-size:2em; margin:3px; cursor:default; line-height:1; }
   #gardenMessage { font-size:0.9em; color:#999; padding-top:50px; text-align:center; width:100%; }
-  
-  /* 訊息位置優化：鎖定右下角 */
+  /* Toast */
   #toast { 
         position: fixed; 
         right: 20px; 
@@ -34,9 +33,6 @@
         flex-direction:column; 
         gap:8px; 
         max-width: 90%; 
-        /* 增加 top/left 避免佈局繼承錯誤 */
-        top: auto;
-        left: auto;
     }
   .toast-item { 
         background: rgba(0,0,0,0.8); 
@@ -56,8 +52,7 @@
 <div class="max-w-3xl mx-auto p-6">
   <header class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v1.4 💧</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-300">務實、第一性原理解法 — 穩定、可維護、可擴充。</p>
+      <h1 class="text-2xl font-semibold">WaterHero v1.6 💧</h1>
     </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
@@ -300,9 +295,16 @@ function popLastIntake(dateKey){
 
 /* ---------- actions ---------- */
 function onAdd(){
-  if(!addInput) return; // 確保元素存在
+  if(!addInput) return;
+  
+  // 注意：這裡我們依靠 form novalidate 關閉 HTML5 彈窗。
+  // 我們只在 JS 中檢查數值是否為 0 或負數。
   const raw = parseFloat(addInput.value);
-  if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; } // **ALERT REMOVED**
+  if (!raw || raw <= 0) { 
+        showToast('請輸入大於 0 的數字'); 
+        return; 
+    }
+    
   let addMl = raw;
   if (unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
 
@@ -326,28 +328,28 @@ function onUndo(){
   
   const todayIntakes = getDailyIntakes(todayKey());
   if (todayIntakes.length === 0 || todayIntakes[todayIntakes.length - 1] !== last.amount || last.date !== todayKey()){
-    showToast('只能撤銷上一次單筆喝水記錄'); // **ALERT REMOVED**
+    showToast('只能撤銷上一次單筆喝水記錄');
     return;
   }
   
   const popped = popLastIntake(last.date);
   if (popped !== null){
     render();
-    showToast(`已撤銷 ${popped} ml`); // **ALERT REMOVED**
+    showToast(`已撤銷 ${popped} ml`);
   }
 }
 
 function onWaterFlower(){
   if (!waterFlowerBtn) return;
   if ((state.meta.bucketAmount || 0) < WATER_NEEDED_FOR_FLOWER){
-    showToast(`水桶不足 ${WATER_NEEDED_FOR_FLOWER} ml 才能澆花`); // **ALERT REMOVED**
+    showToast(`水桶不足 ${WATER_NEEDED_FOR_FLOWER} ml 才能澆花`);
     return;
   }
   state.meta.bucketAmount -= WATER_NEEDED_FOR_FLOWER;
   state.meta.flowerGarden.push({ date: todayKey(), timestamp: Date.now() });
   saveState();
   render();
-  showToast('澆花成功，花園新增一朵花 🌸'); // **ALERT REMOVED**
+  showToast('澆花成功，花園新增一朵花 🌸');
 }
 
 /* ---------- achievement / level ---------- */
