@@ -23,33 +23,9 @@
   .dark .flower-garden { background:#1a202c; border-color:#4a5568; }
   .flower-unit { font-size:2em; margin:3px; cursor:default; line-height:1; }
   #gardenMessage { font-size:0.9em; color:#999; padding-top:50px; text-align:center; width:100%; }
-  /* Toast */
-  #toast { 
-        position: fixed; 
-        right: 20px; 
-        bottom: 24px; 
-        z-index: 9999; 
-        display:flex; 
-        flex-direction:column; 
-        gap:8px; 
-        max-width: 90%; 
-        top: auto; 
-        left: auto;
-    }
-  .toast-item { 
-        background: rgba(0,0,0,0.8); 
-        color: #fff; 
-        padding:10px 14px; 
-        border-radius:8px; 
-        min-width:160px; 
-        box-shadow: 0 6px 18px rgba(0,0,0,0.2); 
-        font-size:14px; 
-    }
 </style>
 </head>
 <body class="bg-gradient-to-b from-sky-50 to-white dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 min-h-screen">
-
-<div id="toast"></div>
 
 <div class="max-w-3xl mx-auto p-6">
   <header class="flex items-center justify-between mb-6">
@@ -179,7 +155,7 @@
 <script>
 /*
   WaterHero v2.0 - 最終穩定版
-  修正重點：移除 HTML5 min="1" 屬性，徹底消除瀏覽器預設驗證彈窗。
+  修正重點：移除所有 alert() 及瀏覽器預設表單驗證。
 */
 
 const LS_KEY = 'waterhero_v1';
@@ -297,10 +273,10 @@ function popLastIntake(dateKey){
 
 /* ---------- actions ---------- */
 function onAdd(){
-  if(!addInput) return;
+  if(!addInput) return; // 確保元素存在
   
   const raw = parseFloat(addInput.value);
-  // 這裡進行純 JS 驗證
+  // 這裡進行純 JS 驗證，不再依賴 HTML min="1"
   if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; }
   let addMl = raw;
   if (unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
