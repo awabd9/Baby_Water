@@ -214,6 +214,7 @@
 <script>
 /*
   WaterHero — 終極整合單檔案版本
+  這個版本將所有啟動邏輯集中在 onReady 函式中，確保 DOM 元素和事件綁定能夠穩定執行。
 */
 
 // ----------------- utility -----------------
@@ -257,85 +258,8 @@ function defaultState(){
 let state = loadState();
 let canUndo = false; 
 
-// ----------------- DOM refs -----------------
-const todayKey = () => isoDate();
-const goalDisplay = document.getElementById('goalDisplay');
-const todayTotalEl = document.getElementById('todayTotal');
-const progressBar = document.getElementById('progressBar');
-const addInput = document.getElementById('addInput');
-const addBtn = document.getElementById('addBtn');
-const undoBtn = document.getElementById('undoBtn');
-const unitSelect = document.getElementById('unitSelect');
-const unitLabel = document.getElementById('unitLabel');
-const unitLabel2 = document.getElementById('unitLabel2');
-const goalInput = document.getElementById('goalInput');
-const saveSettings = document.getElementById('saveSettings');
-const resetTodayBtn = document.getElementById('resetToday');
-const weekChartCtx = document.getElementById('weekChart');
-const historyList = document.getElementById('historyList');
-const exportBtn = document.getElementById('exportBtn');
-
-const bottleNameInput = document.getElementById('bottleName');
-const bottleLevelEl = document.getElementById('bottleLevel');
-const streakCountEl = document.getElementById('streakCount');
-const badgeContainer = document.getElementById('badgeContainer');
-const claimBadgeBtn = document.getElementById('claimBadge');
-const resetAllBtn = document.getElementById('resetAll');
-
-// 遊戲化 DOM 引用
-const waterLevelDisplay = document.getElementById('waterLevel');
-const waterFlowerBtn = document.getElementById('waterFlowerBtn');
-const flowerGardenDisplay = document.getElementById('flowerGarden'); 
-
-// ----------------- initialization -----------------
-function init(){
-  // 檢查並初始化遊戲化數據
-  if (typeof state.meta.bucketAmount === 'undefined') state.meta.bucketAmount = 0;
-  if (typeof state.meta.flowerGarden === 'undefined') state.meta.flowerGarden = [];
-
-  // apply settings UI
-  goalInput.value = state.settings.goal;
-  unitSelect.value = state.settings.unit;
-  reminderMinutesInput.value = state.settings.reminderMinutes;
-  bottleNameInput.value = state.meta.bottleName || '';
-  applyTheme(state.settings.theme);
-
-  // render today
-  if (!state.data[todayKey()]) state.data[todayKey()] = 0;
-  if (!state.meta.dailyIntakes[todayKey()]) state.meta.dailyIntakes[todayKey()] = [];
-  render();
-
-  // ------------------- 事件綁定 (核心修復區) -------------------
-  // 檢查每個按鈕元素，確保非空，再綁定
-  if (addBtn) addBtn.addEventListener('click', onAdd);
-  if (addInput) addInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') onAdd(); });
-  if (undoBtn) undoBtn.addEventListener('click', onUndo); 
-  
-  if (saveSettings) saveSettings.addEventListener('click', onSaveSettings);
-  if (resetTodayBtn) resetTodayBtn.addEventListener('click', onResetToday);
-  if (unitSelect) unitSelect.addEventListener('change', onUnitChange);
-  if (exportBtn) exportBtn.addEventListener('click', onExport);
-  
-  if (bottleNameInput) bottleNameInput.addEventListener('change', onBottleNameChange);
-  if (claimBadgeBtn) claimBadgeBtn.addEventListener('click', onClaimBadge);
-  if (resetAllBtn) resetAllBtn.addEventListener('click', onResetAll);
-  
-  if (waterFlowerBtn) waterFlowerBtn.addEventListener('click', onWaterFlower); // 澆花按鈕
-
-  // ------------------- /事件綁定 -------------------
-
-  startReminderTimerIfNeeded();
-  initBadgeAnimation();
-  initChart();
-  updateChart();
-}
-
-function applyTheme(t){
-  if (t === 'dark') document.documentElement.classList.add('dark');
-  else document.documentElement.classList.remove('dark');
-  state.settings.theme = t;
-  saveState();
-}
+// ----------------- DOM refs will be defined inside onReady -----------------
+let D = {}; // 將所有 DOM 引用集中在此物件中
 
 // ----------------- core functions -----------------
 function getTodayTotal(){
@@ -354,16 +278,16 @@ function setTodayTotal(v, rawAmount){
 }
 
 function onAdd(){
-  const raw = parseFloat(addInput.value);
+  const raw = parseFloat(D.addInput.value);
   if (!raw || raw <= 0) { alert('請輸入大於 0 的數字'); return; }
   let addMl = raw;
-  if (unitSelect.value === 'cup') addMl = raw * 250;
+  if (D.unitSelect.value === 'cup') addMl = raw * 250;
   
   const prevTotal = getTodayTotal();
   const newTotal = prevTotal + addMl;
   
   setTodayTotal(newTotal, addMl);
-  addInput.value = '';
+  D.addInput.value = '';
   
   canUndo = true; 
 
@@ -423,11 +347,11 @@ function onWaterFlower(){
 
 
 function onSaveSettings(){
-  const g = parseInt(goalInput.value) || 2000;
-  const rm = parseInt(reminderMinutesInput.value) || 120;
+  const g = parseInt(D.goalInput.value) || 2000;
+  const rm = parseInt(D.reminderMinutesInput.value) || 120;
   state.settings.goal = Math.max(100, g);
   state.settings.reminderMinutes = Math.max(10, rm);
-  state.settings.unit = unitSelect.value;
+  state.settings.unit = D.unitSelect.value;
   saveState();
   render();
   startReminderTimerIfNeeded(true);
@@ -455,9 +379,9 @@ function onResetAll(){
 }
 
 function onUnitChange(){
-  if (unitSelect.value === 'cup') { unitLabel.textContent = '杯'; unitLabel2.textContent = '杯'; }
-  else { unitLabel.textContent = 'ml'; unitLabel2.textContent = 'ml'; }
-  state.settings.unit = unitSelect.value;
+  if (D.unitSelect.value === 'cup') { D.unitLabel.textContent = '杯'; D.unitLabel2.textContent = '杯'; }
+  else { D.unitLabel.textContent = 'ml'; D.unitLabel2.textContent = 'ml'; }
+  state.settings.unit = D.unitSelect.value;
   saveState();
   render();
 }
@@ -544,7 +468,7 @@ function showNotification(title, body){
   if (!('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
   try {
-    const n = new Notification(title, { body, icon: null });
+    const n = new Notification(title, { body: body, icon: null });
     n.onclick = () => window.focus();
   } catch(e) { console.warn('通知失敗', e); }
 }
@@ -564,7 +488,7 @@ function initChart(){
       plugins: { legend: { display: false } }
     }
   };
-  weekChart = new Chart(weekChartCtx, cfg);
+  weekChart = new Chart(D.weekChartCtx, cfg);
 }
 
 function updateChart(){
@@ -602,7 +526,7 @@ function renderHistoryList(){
                </div>`;
     });
   }
-  historyList.innerHTML = html;
+  D.historyList.innerHTML = html;
 }
 
 // ----------------- render UI -----------------
@@ -612,27 +536,27 @@ function render(){
   if (!state.meta.dailyIntakes[todayKey()]) state.meta.dailyIntakes[todayKey()] = [];
 
   // WaterHero UI
-  goalDisplay.textContent = state.settings.goal;
-  todayTotalEl.textContent = Math.round(getTodayTotal());
+  D.goalDisplay.textContent = state.settings.goal;
+  D.todayTotalEl.textContent = Math.round(getTodayTotal());
   const pct = Math.min(100, Math.round(getTodayTotal() / state.settings.goal * 100));
-  progressBar.style.width = pct + '%';
-  bottleLevelEl.textContent = `Lv.${(state.meta.level || 1)}`;
-  streakCountEl.textContent = state.meta.streak || 0;
-  bottleNameInput.value = state.meta.bottleName || '';
+  D.progressBar.style.width = pct + '%';
+  D.bottleLevelEl.textContent = `Lv.${(state.meta.level || 1)}`;
+  D.streakCountEl.textContent = state.meta.streak || 0;
+  D.bottleNameInput.value = state.meta.bottleName || '';
   updateChart();
 
   // 遊戲化 UI
   const maxCapacity = WATER_NEEDED_FOR_FLOWER * 2; 
   let levelPercentage = Math.min((state.meta.bucketAmount / maxCapacity) * 100, 100);
-  waterLevelDisplay.style.height = `${levelPercentage}%`;
+  D.waterLevelDisplay.style.height = `${levelPercentage}%`;
 
   if (state.meta.bucketAmount >= WATER_NEEDED_FOR_FLOWER) {
-      waterFlowerBtn.disabled = false;
-      waterFlowerBtn.title = `點擊澆花 (${WATER_NEEDED_FOR_FLOWER} ml)`;
+      D.waterFlowerBtn.disabled = false;
+      D.waterFlowerBtn.title = `點擊澆花 (${WATER_NEEDED_FOR_FLOWER} ml)`;
   } else {
-      waterFlowerBtn.disabled = true;
+      D.waterFlowerBtn.disabled = true;
       const missing = WATER_NEEDED_FOR_FLOWER - state.meta.bucketAmount;
-      waterFlowerBtn.title = `還需要 ${missing} ml 才能澆花`;
+      D.waterFlowerBtn.title = `還需要 ${missing} ml 才能澆花`;
   }
   
   renderGarden();
@@ -650,7 +574,7 @@ function renderGarden() {
             html += `<span class="flower-unit">${FINAL_FLOWER_ICON}</span>`;
         });
     }
-    flowerGardenDisplay.innerHTML = html;
+    D.flowerGardenDisplay.innerHTML = html;
 }
 
 // ----------------- export / import -----------------
@@ -676,7 +600,7 @@ function initBadgeAnimation(){
   };
   try {
     lottiePlayer = lottie.loadAnimation({
-      container: badgeContainer,
+      container: D.badgeContainer,
       renderer: 'svg',
       loop: false,
       autoplay: false,
@@ -725,18 +649,84 @@ setInterval(()=> {
 }, 60*1000);
 
 // ----------------- init + first render -----------------
-// 使用 window.onload 確保所有 DOM 元素和外部 CDN 程式庫都完全載入後才啟動
-window.onload = () => {
-    // 獨立獲取和綁定這兩個容易失敗的按鈕
-    const themeToggle = document.getElementById('themeToggle');
-    const notifyBtn = document.getElementById('notifyBtn');
 
-    if (themeToggle) themeToggle.addEventListener('click', onToggleTheme);
-    if (notifyBtn) notifyBtn.addEventListener('click', onRequestNotify);
+function onReady() {
+    // ------------------- 1. 集中獲取所有 DOM 元素 -------------------
+    D = {
+        goalDisplay: document.getElementById('goalDisplay'),
+        todayTotalEl: document.getElementById('todayTotal'),
+        progressBar: document.getElementById('progressBar'),
+        addInput: document.getElementById('addInput'),
+        addBtn: document.getElementById('addBtn'),
+        undoBtn: document.getElementById('undoBtn'),
+        unitSelect: document.getElementById('unitSelect'),
+        unitLabel: document.getElementById('unitLabel'),
+        unitLabel2: document.getElementById('unitLabel2'),
+        goalInput: document.getElementById('goalInput'),
+        saveSettings: document.getElementById('saveSettings'),
+        resetTodayBtn: document.getElementById('resetToday'),
+        weekChartCtx: document.getElementById('weekChart'),
+        historyList: document.getElementById('historyList'),
+        reminderMinutesInput: document.getElementById('reminderMinutes'),
+        exportBtn: document.getElementById('exportBtn'),
+        themeToggle: document.getElementById('themeToggle'),
+        notifyBtn: document.getElementById('notifyBtn'),
+        
+        bottleNameInput: document.getElementById('bottleName'),
+        bottleLevelEl: document.getElementById('bottleLevel'),
+        streakCountEl: document.getElementById('streakCount'),
+        badgeContainer: document.getElementById('badgeContainer'),
+        claimBadgeBtn: document.getElementById('claimBadge'),
+        resetAllBtn: document.getElementById('resetAll'),
+
+        waterLevelDisplay: document.getElementById('waterLevel'),
+        waterFlowerBtn: document.getElementById('waterFlowerBtn'),
+        flowerGardenDisplay: document.getElementById('flowerGarden'), 
+    };
     
-    // 啟動主程式
-    init();
-};
+    // ------------------- 2. 啟動主程式邏輯 -------------------
+    // 檢查並初始化遊戲化數據
+    if (typeof state.meta.bucketAmount === 'undefined') state.meta.bucketAmount = 0;
+    if (typeof state.meta.flowerGarden === 'undefined') state.meta.flowerGarden = [];
+
+    // apply settings UI
+    D.goalInput.value = state.settings.goal;
+    D.unitSelect.value = state.settings.unit;
+    D.reminderMinutesInput.value = state.settings.reminderMinutes;
+    D.bottleNameInput.value = state.meta.bottleName || '';
+    applyTheme(state.settings.theme);
+
+    // render today
+    if (!state.data[todayKey()]) state.data[todayKey()] = 0;
+    if (!state.meta.dailyIntakes[todayKey()]) state.meta.dailyIntakes[todayKey()] = [];
+    render();
+
+    // ------------------- 3. 事件綁定 (最可靠的集中綁定) -------------------
+    if (D.addBtn) D.addBtn.addEventListener('click', onAdd);
+    if (D.addInput) D.addInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') onAdd(); });
+    if (D.undoBtn) D.undoBtn.addEventListener('click', onUndo); 
+    if (D.waterFlowerBtn) D.waterFlowerBtn.addEventListener('click', onWaterFlower); 
+
+    if (D.saveSettings) D.saveSettings.addEventListener('click', onSaveSettings);
+    if (D.resetTodayBtn) D.resetTodayBtn.addEventListener('click', onResetToday);
+    if (D.unitSelect) D.unitSelect.addEventListener('change', onUnitChange);
+    if (D.exportBtn) D.exportBtn.addEventListener('click', onExport);
+    
+    if (D.themeToggle) D.themeToggle.addEventListener('click', onToggleTheme);
+    if (D.notifyBtn) D.notifyBtn.addEventListener('click', onRequestNotify);
+    
+    if (D.bottleNameInput) D.bottleNameInput.addEventListener('change', onBottleNameChange);
+    if (D.claimBadgeBtn) D.claimBadgeBtn.addEventListener('click', onClaimBadge);
+    if (D.resetAllBtn) D.resetAllBtn.addEventListener('click', onResetAll);
+
+    // ------------------- 4. 啟動依賴外部庫的功能 -------------------
+    initChart();
+    initBadgeAnimation();
+    startReminderTimerIfNeeded();
+}
+
+// 使用 window.onload 確保所有 DOM 元素和外部 CDN 程式庫都完全載入後才啟動
+window.onload = onReady;
 </script>
 </body>
 </html>
