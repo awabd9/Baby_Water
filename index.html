@@ -261,12 +261,8 @@ const themeToggleBtn = document.getElementById('themeToggle');
 const notifyBtn = document.getElementById('notifyBtn');
 
 /* ---------- core data helpers ---------- */
-function getDailyIntakes(dateKey){
-  return state.meta.dailyIntakes[dateKey] || [];
-}
-function getTotalFor(dateKey){
-  return getDailyIntakes(dateKey).reduce((s,v)=>s+v, 0);
-}
+function getDailyIntakes(dateKey){ return state.meta.dailyIntakes[dateKey] || []; }
+function getTotalFor(dateKey){ return getDailyIntakes(dateKey).reduce((s,v)=>s+v, 0); }
 function pushIntake(dateKey, amount){
   if (!state.meta.dailyIntakes[dateKey]) state.meta.dailyIntakes[dateKey] = [];
   state.meta.dailyIntakes[dateKey].push(amount);
@@ -286,17 +282,17 @@ function popLastIntake(dateKey){
 
 /* ---------- actions ---------- */
 function onAdd(){
+  if(!addInput) return; // 確保元素存在
   const raw = parseFloat(addInput.value);
   if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; }
   let addMl = raw;
-  if (unitSelect.value === 'cup') addMl = raw * 250;
+  if (unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
 
   const key = todayKey();
   pushIntake(key, addMl);
   addInput.value = '';
   render();
 
-  // detect achievement
   const prevTotal = getTotalFor(key) - addMl;
   const newTotal = getTotalFor(key);
   if (prevTotal < state.settings.goal && newTotal >= state.settings.goal){
@@ -310,14 +306,12 @@ function onUndo(){
   const last = state.meta.lastIntake;
   if (!last) { showToast('無可撤銷的紀錄'); return; }
   
-  // 檢查上次記錄是否為今天，並且確保 lastIntake 與 array 最後一筆一致 (防止連續撤銷)
   const todayIntakes = getDailyIntakes(todayKey());
   if (todayIntakes[todayIntakes.length - 1] !== last.amount || last.date !== todayKey()){
     showToast('只能撤銷上一次單筆喝水記錄');
     return;
   }
   
-  // 執行撤銷
   const popped = popLastIntake(last.date);
   if (popped !== null){
     render();
@@ -342,11 +336,8 @@ function onAchieveToday(){
   const yesterday = isoDate(new Date(Date.now() - MILLI_PER_DAY));
   const yesterdayReached = getTotalFor(yesterday) >= state.settings.goal;
 
-  if (yesterdayReached && state.meta.lastAchieved === yesterday){
-    state.meta.streak = (state.meta.streak || 0) + 1;
-  } else {
-    state.meta.streak = yesterdayReached ? (state.meta.streak || 0) + 1 : 1;
-  }
+  if (yesterdayReached && state.meta.lastAchieved === yesterday){ state.meta.streak = (state.meta.streak || 0) + 1; } 
+  else { state.meta.streak = yesterdayReached ? (state.meta.streak || 0) + 1 : 1; }
   state.meta.lastAchieved = todayKey();
   updateBottleLevel();
   saveState();
@@ -375,75 +366,43 @@ function onClaimBadge(){
     state.meta.badges.push(badge);
     saveState();
     showToast('徽章已領取並加入徽章牆');
-  } else {
-    showToast('本日徽章已領取');
-  }
+  } else { showToast('本日徽章已領取'); }
   render();
 }
 
-/* ---------- settings / export / reset ---------- */
-function onSaveSettings(){
-  const g = parseInt(goalInput.value) || 2000;
-  const rm = parseInt(reminderMinutesInput.value) || 120;
-  state.settings.goal = Math.max(100, g);
-  state.settings.reminderMinutes = Math.max(10, rm);
-  state.settings.unit = unitSelect.value;
+/* ---------- notifications / theme ---------- */
+function applyTheme(t){
+  if (t === 'dark') document.documentElement.classList.add('dark');
+  else document.documentElement.classList.remove('dark');
+  state.settings.theme = t;
   saveState();
-  startReminderTimerIfNeeded(true);
-  showToast('設定已儲存');
-  render();
 }
 
-function onResetToday(){
-  if (!confirm('確認要重設今日喝水紀錄？此動作不可還原。')) return;
-  state.meta.dailyIntakes[todayKey()] = [];
-  state.meta.lastIntake = null;
-  saveState();
-  render();
-  showToast('今日紀錄已重設');
+function onToggleTheme(){
+  const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+  applyTheme(next);
+  showToast(`主題更新為 ${next}`);
 }
 
-function onResetAll(){
-  if (!confirm('重設所有資料（含 streak、徽章、歷史、花園）？')) return;
-  const token = prompt('輸入 "yes" 以確認重設');
-  if (token !== 'yes') return;
-  state = defaultState();
-  saveState();
-  location.reload();
+async function onRequestNotify(){
+  if (!('Notification' in window)) { showToast('此瀏覽器不支援通知'); return; }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') { showToast('已取得通知權限（分頁開啟時生效）'); showNotification('提醒已啟用', 'WaterHero 提醒已啟用'); }
+    else showToast('未取得通知權限');
+  } catch(e){ console.warn(e); showToast('通知啟用失敗'); }
 }
 
-function onExport(){
-  const dataStr = JSON.stringify(state, null, 2);
-  const blob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `waterhero_export_${isoDate()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('資料已匯出');
+function showNotification(title, body){
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    const n = new Notification(title, { body: body, icon: null });
+    n.onclick = () => window.focus();
+  } catch(e) { console.warn('notification error', e); }
 }
 
-function onBottleNameChange(){
-  state.meta.bottleName = bottleNameInput.value.trim();
-  saveState();
-  showToast('水瓶名稱已儲存');
-}
-
-/* ---------- chart / history / render ---------- */
-function initChart(){
-  const cfg = {
-    type: 'bar',
-    data: { labels: [], datasets: [{ label: '每日總量 (ml)', data: [], borderRadius: 8, barThickness: 18 }]},
-    options: {
-      responsive: true,
-      scales: { x: { grid: { display: false } }, y: { beginAtZero: true } },
-      plugins: { legend: { display: false } }
-    }
-  };
-  weekChart = new Chart(weekChartCtx, cfg);
-}
-
+/* ---------- chart update trigger ---------- */
 function updateChart(){
   if (!weekChart) return;
   const labels = [], dataPoints = [];
@@ -480,29 +439,31 @@ function render(){
   if (!state.meta.dailyIntakes[todayKey()]) state.meta.dailyIntakes[todayKey()] = [];
 
   // 核心 UI 更新
-  goalDisplay.textContent = state.settings.goal;
+  if(goalDisplay) goalDisplay.textContent = state.settings.goal;
   const todayTotal = getTotalFor(todayKey());
-  todayTotalEl.textContent = Math.round(todayTotal);
+  if(todayTotalEl) todayTotalEl.textContent = Math.round(todayTotal);
   const pct = Math.min(100, Math.round((todayTotal / state.settings.goal) * 100));
-  progressBar.style.width = pct + '%';
+  if(progressBar) progressBar.style.width = pct + '%';
 
   // 遊戲化/徽章 UI 更新
-  bottleLevelEl.textContent = `Lv.${(state.meta.level || 1)}`;
-  streakCountEl.textContent = state.meta.streak || 0;
-  bottleNameInput.value = state.meta.bottleName || '';
+  if(bottleLevelEl) bottleLevelEl.textContent = `Lv.${(state.meta.level || 1)}`;
+  if(streakCountEl) streakCountEl.textContent = state.meta.streak || 0;
+  if(bottleNameInput) bottleNameInput.value = state.meta.bottleName || '';
 
   // 水桶 UI
   const maxCapacity = WATER_NEEDED_FOR_FLOWER * 2;
   let levelPercentage = Math.min(((state.meta.bucketAmount || 0) / maxCapacity) * 100, 100);
-  waterLevelDisplay.style.height = `${levelPercentage}%`;
+  if(waterLevelDisplay) waterLevelDisplay.style.height = `${levelPercentage}%`;
 
-  if ((state.meta.bucketAmount || 0) >= WATER_NEEDED_FOR_FLOWER){
-    waterFlowerBtn.disabled = false;
-    waterFlowerBtn.title = `點擊澆花 (${WATER_NEEDED_FOR_FLOWER} ml)`;
-  } else {
-    waterFlowerBtn.disabled = true;
-    const missing = WATER_NEEDED_FOR_FLOWER - (state.meta.bucketAmount || 0);
-    waterFlowerBtn.title = `還需要 ${missing} ml 才能澆花`;
+  if (waterFlowerBtn) {
+    if ((state.meta.bucketAmount || 0) >= WATER_NEEDED_FOR_FLOWER){
+      waterFlowerBtn.disabled = false;
+      waterFlowerBtn.title = `點擊澆花 (${WATER_NEEDED_FOR_FLOWER} ml)`;
+    } else {
+      waterFlowerBtn.disabled = true;
+      const missing = WATER_NEEDED_FOR_FLOWER - (state.meta.bucketAmount || 0);
+      waterFlowerBtn.title = `還需要 ${missing} ml 才能澆花`;
+    }
   }
 
   renderGarden();
@@ -513,26 +474,17 @@ function render(){
 function renderGarden(){
   const garden = state.meta.flowerGarden || [];
   if (!garden.length){
-    flowerGardenDisplay.innerHTML = `<p id="gardenMessage">你的花園還空空的，快來澆水吧！</p>`;
+    if(flowerGardenDisplay) flowerGardenDisplay.innerHTML = `<p id="gardenMessage">你的花園還空空的，快來澆水吧！</p>`;
     return;
   }
   let html = '';
   garden.forEach(()=> html += `<span class="flower-unit">${FINAL_FLOWER_ICON}</span>`);
-  flowerGardenDisplay.innerHTML = html;
+  if(flowerGardenDisplay) flowerGardenDisplay.innerHTML = html;
 }
-
-/* ---------- badge / lottie ---------- */
-function initBadgeAnimation(){
-  const sampleAnim = {"v":"5.5.7","fr":30,"ip":0,"op":60,"w":200,"h":200,"nm":"drop","ddd":0,"assets":[],"layers":[{"ddd":0,"ind":1,"ty":4,"nm":"drop","sr":1,"ks":{"o":{"k":100},"r":{"k":0},"p":{"k":[100,100,0]},"a":{"k":[0,0,0]},"s":{"k":[100,100,100]}},"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ks":{"k":{"i":[[0,0]],"o":[[0,0]],"v":[[0,-40],[24,-10],[12,30],[-12,30],[-24,-10]],"c":true}},"nm":"path"},{"ty":"fl","c":{"k":[0.13,0.63,0.95,1]},"o":{"k":100}}],"nm":"dropShape"}]}]};
-  try {
-    lottiePlayer = lottie.loadAnimation({ container: badgeContainer, renderer: 'svg', loop: false, autoplay: false, animationData: sampleAnim });
-  } catch(e){ console.warn('lottie fail', e); }
-}
-function playBadgeUnlock(){ if (lottiePlayer) { try { lottiePlayer.goToAndPlay(0,true); } catch(e){console.warn(e);} } }
 
 /* ---------- init ---------- */
 window.onload = () => {
-  // 這是主啟動點。所有元素都在全域範圍內被獲取，並在這裡綁定事件。
+  // 這是主啟動點。所有按鈕都會被在這裡綁定。
   
   // 綁定核心事件
   if (addBtn) addBtn.addEventListener('click', onAdd);
@@ -549,10 +501,10 @@ window.onload = () => {
   if (claimBadgeBtn) claimBadgeBtn.addEventListener('click', onClaimBadge);
   if (resetAllBtn) resetAllBtn.addEventListener('click', onResetAll);
   
-  // 主題與通知 (已確認運作的)
+  // 主題與通知 (修復點：直接在此處檢查並綁定)
   if (themeToggleBtn) themeToggleBtn.addEventListener('click', onToggleTheme);
   if (notifyBtn) notifyBtn.addEventListener('click', onRequestNotify);
-
+  
   // 啟動依賴外部庫的功能
   initChart();
   initBadgeAnimation();
