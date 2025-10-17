@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v2.6 — 每日喝水紀錄（極限適配版）</title>
+<title>WaterHero v2.6 — 每日喝水紀錄（最終穩定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -24,32 +24,31 @@
   .flower-unit { font-size:2em; margin:3px; cursor:default; line-height:1; }
   #gardenMessage { font-size:0.9em; color:#999; padding-top:50px; text-align:center; width:100%; }
   /* Toast */
-  #toast { 
-        position: fixed; 
-        right: 20px; 
-        bottom: 24px; 
-        z-index: 9999; 
-        display:flex; 
-        flex-direction:column; 
-        gap:8px; 
-        max-width: 90%; 
-        top: auto; 
-        left: auto;
-    }
-  .toast-item { 
-        background: rgba(0,0,0,0.8); 
-        color: #fff; 
-        padding:10px 14px; 
-        border-radius:8px; 
-        min-width:160px; 
-        box-shadow: 0 6px 18px rgba(0,0,0,0.2); 
-        font-size:14px; 
-    }
+  #toast { 
+        position: fixed; 
+        right: 20px; 
+        bottom: 24px; 
+        z-index: 9999; 
+        display:flex; 
+        flex-direction:column; 
+        gap:8px; 
+        max-width: 90%; 
+        top: auto; 
+        left: auto;
+    }
+  .toast-item { 
+        background: rgba(0,0,0,0.8); 
+        color: #fff; 
+        padding:10px 14px; 
+        border-radius:8px; 
+        min-width:160px; 
+        box-shadow: 0 6px 18px rgba(0,0,0,0.2); 
+        font-size:14px; 
+    }
     /* 最終極限優化：防止頁面溢出 */
     body {
         overflow-x: hidden !important;
     }
-    /* 確保主容器在手機上強制佔滿，不溢出 */
     .max-w-3xl.mx-auto.p-6 {
         max-width: 100% !important;
         padding-left: 1rem;
@@ -72,14 +71,14 @@
 <div class="max-w-3xl mx-auto p-6">
   <header class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v2.4 💧</h1>
+      <h1 class="text-2xl font-semibold">WaterHero v2.6 💧</h1>
     </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
     </div>
   </header>
 
-    <main class="grid gap-4 md:grid-cols-2">
+  <main class="grid gap-4 md:grid-cols-2">
     <form id="addForm" onsubmit="event.preventDefault();" novalidate class="md:col-span-2"> 
     <section class="p-4 rounded-2xl glass shadow">
         <div class="flex justify-between items-center mb-3">
@@ -183,7 +182,6 @@
           <div class="flex gap-2 mt-1">
             <input id="reminderMinutes" type="number" min="10" value="120" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 w-24">
             <div class="self-center text-sm">分鐘</div>
-          </div>
         </div>
       </div>
 
@@ -319,9 +317,10 @@ function popLastIntake(dateKey){
 
 /* ---------- actions ---------- */
 function onAdd(){
-  if(!addInput) return;
+  if(!addInput) return; // 確保元素存在
   
   const raw = parseFloat(addInput.value);
+  // 這裡進行純 JS 驗證
   if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; }
   let addMl = raw;
   if (unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
@@ -336,7 +335,7 @@ function onAdd(){
   if (prevTotal < state.settings.goal && newTotal >= state.settings.goal){
     onAchieveToday();
   } else {
-    console.log(`已新增 ${addMl} ml`);
+    console.log(`已新增 ${addMl} ml`); // 訊息導向 Console
   }
   state.meta.lastReminderTime = Date.now();
 }
