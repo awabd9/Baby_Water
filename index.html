@@ -49,27 +49,21 @@
     body {
         overflow-x: hidden !important;
     }
-    /* 確保主容器在手機上強制佔滿，並在桌面置中 */
+    /* 確保主容器在手機上強制佔滿，且不溢出 */
     .max-w-3xl.mx-auto.p-6 {
-        width: 100%; 
-        padding-left: 1rem;
+        max-width: 100% !important;
+        width: 100%;
+        padding-left: 1rem; /* 較小的左右內邊距 */
         padding-right: 1rem;
         box-sizing: border-box;
     }
+    /* 桌面版寬度保持原樣 */
     @media (min-width: 768px) {
         .max-w-3xl.mx-auto.p-6 {
             max-width: 1024px !important;
             padding: 1.5rem;
-            margin: 0 auto; /* 確保桌面置中 */
+            margin: 0 auto; 
         }
-    }
-    /* 修正遊戲化區塊內部對齊 */
-    .flower-area-content {
-        text-align: center;
-        width: 100%;
-        display: flex; 
-        flex-direction: column;
-        align-items: center;
     }
 </style>
 </head>
