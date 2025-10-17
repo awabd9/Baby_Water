@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero — 每日喝水紀錄 (終極整合版)</title>
+<title>WaterHero — 每日喝水紀錄 (終極修復版)</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -274,9 +274,10 @@ const resetTodayBtn = document.getElementById('resetToday');
 const weekChartCtx = document.getElementById('weekChart');
 const historyList = document.getElementById('historyList');
 const reminderMinutesInput = document.getElementById('reminderMinutes');
-const notifyBtn = document.getElementById('notifyBtn');
+// const notifyBtn = document.getElementById('notifyBtn'); // 移到 onload 範圍
+// const themeToggle = document.getElementById('themeToggle'); // 移到 onload 範圍
 const exportBtn = document.getElementById('exportBtn');
-const themeToggle = document.getElementById('themeToggle');
+
 
 const bottleNameInput = document.getElementById('bottleName');
 const bottleLevelEl = document.getElementById('bottleLevel');
@@ -314,15 +315,12 @@ function init(){
   saveSettings.addEventListener('click', onSaveSettings);
   resetTodayBtn.addEventListener('click', onResetToday);
   unitSelect.addEventListener('change', onUnitChange);
-  notifyBtn.addEventListener('click', onRequestNotify);
   exportBtn.addEventListener('click', onExport);
-  themeToggle.addEventListener('click', onToggleTheme);
   bottleNameInput.addEventListener('change', onBottleNameChange);
   claimBadgeBtn.addEventListener('click', onClaimBadge);
   resetAllBtn.addEventListener('click', onResetAll);
   undoBtn.addEventListener('click', onUndo); 
-  
-  waterFlowerBtn.addEventListener('click', onWaterFlower); // 澆花按鈕監聽
+  waterFlowerBtn.addEventListener('click', onWaterFlower); 
 
   startReminderTimerIfNeeded();
   initBadgeAnimation();
@@ -339,20 +337,15 @@ function applyTheme(t){
 
 // ----------------- core functions -----------------
 function getTodayTotal(){
-  // 從單筆記錄陣列計算今日總量
   const todayIntakes = state.meta.dailyIntakes[todayKey()] || [];
   return todayIntakes.reduce((sum, amount) => sum + amount, 0);
 }
 
 function setTodayTotal(v, rawAmount){
-  // 記錄單筆輸入
   if (!state.meta.dailyIntakes[todayKey()]) state.meta.dailyIntakes[todayKey()] = [];
   state.meta.dailyIntakes[todayKey()].push(rawAmount);
 
-  // 更新日總量 (用於圖表和歷史)
   state.data[todayKey()] = v;
-  
-  // 遊戲化邏輯：同時增加水桶的水量
   state.meta.bucketAmount += rawAmount;
 
   saveState();
@@ -364,19 +357,16 @@ function onAdd(){
   let addMl = raw;
   if (unitSelect.value === 'cup') addMl = raw * 250;
   
-  // 紀錄前的總量
   const prevTotal = getTodayTotal();
   const newTotal = prevTotal + addMl;
   
   setTodayTotal(newTotal, addMl);
   addInput.value = '';
   
-  // 設置旗標：允許撤銷
   canUndo = true; 
 
   render();
   
-  // 若剛好達成目標，觸發成就流程
   if (prevTotal < state.settings.goal && newTotal >= state.settings.goal){
     onAchieveToday();
   }
@@ -395,17 +385,13 @@ function onUndo(){
     return;
   }
 
-  // 1. 移除最後一筆記錄
   const lastAmount = todayIntakes.pop();
 
-  // 2. 重新計算今日總量
   const newTotal = getTodayTotal();
   state.data[todayKey()] = newTotal;
   
-  // 遊戲化邏輯：同時減少水桶水量
   state.meta.bucketAmount = Math.max(0, state.meta.bucketAmount - lastAmount);
 
-  // 3. 設置旗標：禁止連續撤銷
   canUndo = false; 
   saveState();
   render();
@@ -419,17 +405,14 @@ function onWaterFlower(){
         return;
     }
 
-    // 1. 減少水桶水量
     state.meta.bucketAmount -= WATER_NEEDED_FOR_FLOWER;
 
-    // 2. 在花園陣列中新增一朵花
     const newFlower = {
         date: todayKey(),
         timestamp: Date.now()
     };
     state.meta.flowerGarden.push(newFlower);
     
-    // 3. 儲存遊戲狀態
     saveState();
     render();
 
@@ -452,11 +435,9 @@ function onSaveSettings(){
 function onResetToday(){
   if (!confirm('確認要重設今日喝水紀錄？此動作不可還原。')) return;
   
-  // WaterHero reset
   state.data[todayKey()] = 0;
   state.meta.dailyIntakes[todayKey()] = [];
   
-  // Game reset
   canUndo = false; 
   saveState();
   render();
@@ -472,7 +453,6 @@ function onResetAll(){
 }
 
 function onUnitChange(){
-  // 翻譯 UI 標籤
   if (unitSelect.value === 'cup') { unitLabel.textContent = '杯'; unitLabel2.textContent = '杯'; }
   else { unitLabel.textContent = 'ml'; unitLabel2.textContent = 'ml'; }
   state.settings.unit = unitSelect.value;
@@ -540,6 +520,11 @@ function startReminderTimerIfNeeded(force=false){
       showNotification('喝水提醒', `尚未達成今日目標 ${state.settings.goal} ml，來一杯水吧`);
     }
   }, mins*60*1000);
+}
+
+function onToggleTheme(){
+  const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+  applyTheme(next);
 }
 
 async function onRequestNotify(){
@@ -707,26 +692,19 @@ function playBadgeUnlock(){
 }
 
 // ----------------- theme toggle -----------------
-function onToggleTheme(){
-  const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-  applyTheme(next);
-}
-
-// ----------------- bottle name change -----------------
-function onBottleNameChange(){
-  state.meta.bottleName = bottleNameInput.value.trim();
-  saveState();
-  alert('水瓶名稱已儲存');
-}
-
-// ----------------- periodic UI updater -----------------
-setInterval(()=> {
-  updateChart();
-}, 60*1000);
-
+// 移到這裡來確保能在 window.onload 裡被綁定
 // ----------------- init + first render -----------------
+
 // 使用 window.onload 確保所有 DOM 元素和外部 CDN 程式庫都完全載入後才啟動
 window.onload = () => {
+    // 獨立獲取和綁定這兩個容易失敗的按鈕
+    const themeToggle = document.getElementById('themeToggle');
+    const notifyBtn = document.getElementById('notifyBtn');
+
+    if (themeToggle) themeToggle.addEventListener('click', onToggleTheme);
+    if (notifyBtn) notifyBtn.addEventListener('click', onRequestNotify);
+    
+    // 啟動主程式
     init();
 };
 </script>
