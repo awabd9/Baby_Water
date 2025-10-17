@@ -23,8 +23,7 @@
   .dark .flower-garden { background:#1a202c; border-color:#4a5568; }
   .flower-unit { font-size:2em; margin:3px; cursor:default; line-height:1; }
   #gardenMessage { font-size:0.9em; color:#999; padding-top:50px; text-align:center; width:100%; }
-  
-  /* 訊息位置優化：移動到右下角 */
+  /* Toast */
   #toast { 
         position: fixed; 
         right: 20px; 
@@ -33,7 +32,7 @@
         display:flex; 
         flex-direction:column; 
         gap:8px; 
-        max-width: 90%; /* 確保在小螢幕上不會溢出 */
+        max-width: 90%; 
     }
   .toast-item { 
         background: rgba(0,0,0,0.8); 
@@ -295,7 +294,7 @@ function popLastIntake(dateKey){
 
 /* ---------- actions ---------- */
 function onAdd(){
-  if(!addInput) return;
+  if(!addInput) return; // 確保元素存在
   const raw = parseFloat(addInput.value);
   if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; }
   let addMl = raw;
@@ -398,7 +397,7 @@ function onSaveSettings(){
 }
 
 function onResetToday(){
-  if (!confirm('確認要重設今日喝水紀錄？此動作不可還原。')) return;
+  if (!confirm('確認要重設今日喝水紀錄？此動作不可還原。')) return; // *保留 confirm*
   state.meta.dailyIntakes[todayKey()] = [];
   state.meta.lastIntake = null;
   saveState();
@@ -407,8 +406,8 @@ function onResetToday(){
 }
 
 function onResetAll(){
-  if (!confirm('重設所有資料（含 streak、徽章、歷史、花園）？')) return;
-  const token = prompt('輸入 "yes" 以確認重設');
+  if (!confirm('重設所有資料（含 streak、徽章、歷史、花園）？')) return; // *保留 confirm*
+  const token = prompt('輸入 "yes" 以確認重設'); // *保留 prompt*
   if (token !== 'yes') return;
   state = defaultState();
   saveState();
@@ -570,8 +569,6 @@ function renderGarden(){
 
 /* ---------- init ---------- */
 window.onload = () => {
-  // 這是主啟動點。所有按鈕都會被在這裡綁定。
-  
   // 綁定核心事件
   if (addBtn) addBtn.addEventListener('click', onAdd);
   if (addInput) addInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') onAdd(); });
@@ -588,7 +585,6 @@ window.onload = () => {
   if (resetAllBtn) resetAllBtn.addEventListener('click', onResetAll);
   
   // 主題與通知 (修復點：直接在此處檢查並綁定)
-  if (themeToggleBtn) themeToggleBtn.addEventListener('click', onToggleTheme);
   if (notifyBtn) notifyBtn.addEventListener('click', onRequestNotify);
 
   // 啟動依賴外部庫的功能
