@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v1.4 — 每日喝水紀錄（無 Alert 最終版）</title>
+<title>WaterHero v1.5 — 每日喝水紀錄（無 Alert 最終版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -176,7 +176,7 @@
 <script>
 /*
   WaterHero v1.3 - 最終穩定版
-  修正重點：確保所有元素即使在載入延遲下也能被綁定。
+  修正重點：移除所有非必要的 alert() 彈窗。
 */
 
 const LS_KEY = 'waterhero_v1';
@@ -294,9 +294,9 @@ function popLastIntake(dateKey){
 
 /* ---------- actions ---------- */
 function onAdd(){
-  if(!addInput) return; // 確保元素存在
+  if(!addInput) return;
   const raw = parseFloat(addInput.value);
-  if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; }
+  if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; } // **ALERT REMOVED**
   let addMl = raw;
   if (unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
 
@@ -320,28 +320,28 @@ function onUndo(){
   
   const todayIntakes = getDailyIntakes(todayKey());
   if (todayIntakes.length === 0 || todayIntakes[todayIntakes.length - 1] !== last.amount || last.date !== todayKey()){
-    showToast('只能撤銷上一次單筆喝水記錄');
+    showToast('只能撤銷上一次單筆喝水記錄'); // **ALERT REMOVED**
     return;
   }
   
   const popped = popLastIntake(last.date);
   if (popped !== null){
     render();
-    showToast(`已撤銷 ${popped} ml`);
+    showToast(`已撤銷 ${popped} ml`); // **ALERT REMOVED**
   }
 }
 
 function onWaterFlower(){
   if (!waterFlowerBtn) return;
   if ((state.meta.bucketAmount || 0) < WATER_NEEDED_FOR_FLOWER){
-    showToast(`水桶不足 ${WATER_NEEDED_FOR_FLOWER} ml 才能澆花`);
+    showToast(`水桶不足 ${WATER_NEEDED_FOR_FLOWER} ml 才能澆花`); // **ALERT REMOVED**
     return;
   }
   state.meta.bucketAmount -= WATER_NEEDED_FOR_FLOWER;
   state.meta.flowerGarden.push({ date: todayKey(), timestamp: Date.now() });
   saveState();
   render();
-  showToast('澆花成功，花園新增一朵花 🌸');
+  showToast('澆花成功，花園新增一朵花 🌸'); // **ALERT REMOVED**
 }
 
 /* ---------- achievement / level ---------- */
