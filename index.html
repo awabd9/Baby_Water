@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v2.1 — 每日喝水紀錄（最終穩定版）</title>
+<title>WaterHero v2.2 — 每日喝水紀錄（靜默最終版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -54,8 +54,8 @@
 <div class="max-w-3xl mx-auto p-6">
   <header class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v2.1 💧</h1>
-          </div>
+      <h1 class="text-2xl font-semibold">WaterHero v2.2 💧</h1>
+    </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
     </div>
@@ -297,10 +297,10 @@ function popLastIntake(dateKey){
 
 /* ---------- actions ---------- */
 function onAdd(){
-  if(!addInput) return; // 確保元素存在
+  if(!addInput) return;
   
   const raw = parseFloat(addInput.value);
-  // 這裡進行純 JS 驗證，不再依賴 HTML min="1"
+  // 這裡進行純 JS 驗證
   if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; }
   let addMl = raw;
   if (unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
