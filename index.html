@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v2.2 — 每日喝水紀錄（靜默最終版）</title>
+<title>WaterHero v2.2 — 每日喝水紀錄（最終穩定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -23,9 +23,33 @@
   .dark .flower-garden { background:#1a202c; border-color:#4a5568; }
   .flower-unit { font-size:2em; margin:3px; cursor:default; line-height:1; }
   #gardenMessage { font-size:0.9em; color:#999; padding-top:50px; text-align:center; width:100%; }
+  /* Toast */
+  #toast { 
+        position: fixed; 
+        right: 20px; 
+        bottom: 24px; 
+        z-index: 9999; 
+        display:flex; 
+        flex-direction:column; 
+        gap:8px; 
+        max-width: 90%; 
+        top: auto; 
+        left: auto;
+    }
+  .toast-item { 
+        background: rgba(0,0,0,0.8); 
+        color: #fff; 
+        padding:10px 14px; 
+        border-radius:8px; 
+        min-width:160px; 
+        box-shadow: 0 6px 18px rgba(0,0,0,0.2); 
+        font-size:14px; 
+    }
 </style>
 </head>
 <body class="bg-gradient-to-b from-sky-50 to-white dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 min-h-screen">
+
+<div id="toast"></div>
 
 <div class="max-w-3xl mx-auto p-6">
   <header class="flex items-center justify-between mb-6">
