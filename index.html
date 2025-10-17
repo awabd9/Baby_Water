@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v2.2 — 每日喝水紀錄（最終穩定版）</title>
+<title>WaterHero v2.3 — 每日喝水紀錄（最終穩定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -23,28 +23,8 @@
   .dark .flower-garden { background:#1a202c; border-color:#4a5568; }
   .flower-unit { font-size:2em; margin:3px; cursor:default; line-height:1; }
   #gardenMessage { font-size:0.9em; color:#999; padding-top:50px; text-align:center; width:100%; }
-  /* Toast */
-  #toast { 
-        position: fixed; 
-        right: 20px; 
-        bottom: 24px; 
-        z-index: 9999; 
-        display:flex; 
-        flex-direction:column; 
-        gap:8px; 
-        max-width: 90%; 
-        top: auto; 
-        left: auto;
-    }
-  .toast-item { 
-        background: rgba(0,0,0,0.8); 
-        color: #fff; 
-        padding:10px 14px; 
-        border-radius:8px; 
-        min-width:160px; 
-        box-shadow: 0 6px 18px rgba(0,0,0,0.2); 
-        font-size:14px; 
-    }
+  /* Toast 訊息容器（靜默運行）*/
+  #toast { display:none; } 
 </style>
 </head>
 <body class="bg-gradient-to-b from-sky-50 to-white dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 min-h-screen">
@@ -54,7 +34,7 @@
 <div class="max-w-3xl mx-auto p-6">
   <header class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v2.2 💧</h1>
+      <h1 class="text-2xl font-semibold">WaterHero v2.3 💧</h1>
     </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
@@ -62,36 +42,41 @@
   </header>
 
   <main class="grid gap-4">
-    <form id="addForm" onsubmit="event.preventDefault();" novalidate> 
-    <section class="p-4 rounded-2xl glass shadow">
-        <div class="flex justify-between items-center mb-3">
-          <div>
-            <div class="text-sm text-slate-500 dark:text-slate-300">今日目標</div>
-            <div class="text-xl font-bold"><span id="goalDisplay">2000</span> <span id="unitLabel">ml</span></div>
-          </div>
-          <div class="text-right">
-            <div class="text-sm text-slate-500 dark:text-slate-300">已喝</div>
-            <div class="text-xl font-bold"><span id="todayTotal">0</span> <span id="unitLabel2">ml</span></div>
-          </div>
+        <section class="p-4 rounded-2xl glass shadow">
+      <div class="flex justify-between items-center mb-3">
+        <div>
+          <div class="text-sm text-slate-500 dark:text-slate-300">今日目標</div>
+          <div class="text-xl font-bold"><span id="goalDisplay">2000</span> <span id="unitLabel">ml</span></div>
         </div>
+        <div class="text-right">
+          <div class="text-sm text-slate-500 dark:text-slate-300">已喝</div>
+          <div class="text-xl font-bold"><span id="todayTotal">0</span> <span id="unitLabel2">ml</span></div>
+        </div>
+      </div>
 
-        <div class="w-full h-4 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden mb-3">
-          <div id="progressBar" class="h-full bg-sky-400 dark:bg-sky-500 text-right progress-wave" style="width:0%"></div>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <input id="addInput" type="number" placeholder="輸入喝水量 (例如 250)" class="flex-1 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-          <div class="flex items-center gap-2 whitespace-nowrap">
-            <select id="unitSelect" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-              <option value="ml">ml</option>
-              <option value="cup">杯 (250ml)</option>
-            </select>
-            <button id="addBtn" class="px-4 py-3 rounded-lg bg-sky-600 text-white">加入</button>
-            <button id="undoBtn" class="px-3 py-3 rounded-lg bg-red-500 text-white" title="撤銷上一筆記錄">↶</button>
+      <div class="w-full text-center text-sm mb-3">
+          <p class="font-medium text-slate-600 dark:text-slate-300">下次提醒倒數:</p>
+          <div id="timerDisplay" class="text-lg font-bold text-sky-500">
+              --:--:--
           </div>
-        </div>
+      </div>
+
+      <div class="w-full h-4 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden mb-3">
+        <div id="progressBar" class="h-full bg-sky-400 dark:bg-sky-500 text-right progress-wave" style="width:0%"></div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <input id="addInput" type="number" placeholder="輸入喝水量 (例如 250)" class="flex-1 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <div class="flex items-center gap-2 whitespace-nowrap">
+          <select id="unitSelect" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+            <option value="ml">ml</option>
+            <option value="cup">杯 (250ml)</option>
+          </select>
+          <button id="addBtn" class="px-4 py-3 rounded-lg bg-sky-600 text-white">加入</button>
+          <button id="undoBtn" class="px-3 py-3 rounded-lg bg-red-500 text-white" title="撤銷上一筆記錄">↶</button>
+        </div>
+      </div>
     </section>
-    </form>
 
         <section class="p-4 rounded-2xl glass shadow">
       <h3 class="font-semibold text-lg mb-3">💧 澆花挑戰：累積與成長</h3>
@@ -178,8 +163,8 @@
 
 <script>
 /*
-  WaterHero v2.0 - 最終穩定版
-  修正重點：移除所有 alert() 及瀏覽器預設表單驗證。
+  WaterHero v2.2 - 最終穩定版
+  修正重點：移除所有 showToast 呼叫，確保靜默運行。
 */
 
 const LS_KEY = 'waterhero_v1';
@@ -189,18 +174,7 @@ const FINAL_FLOWER_ICON = "🌸";
 
 /* ---------- Helpers ---------- */
 function isoDate(d = new Date()){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().split('T')[0]; }
-function showToast(msg, timeout = 3000){
-  const container = document.getElementById('toast');
-  const item = document.createElement('div');
-  item.className = 'toast-item';
-  item.textContent = msg;
-  container.appendChild(item);
-  setTimeout(()=> {
-    item.style.transition = 'opacity 300ms';
-    item.style.opacity = '0';
-    setTimeout(()=> container.removeChild(item), 320);
-  }, timeout);
-}
+function showToast(msg, timeout = 3000){ console.log("TOAST:", msg); } // 訊息導向 Console
 
 /* ---------- state + persistence ---------- */
 function defaultState(){
@@ -215,7 +189,8 @@ function defaultState(){
       level: 1,
       badges: [],
       bottleName: '',
-      lastIntake: null // { date, amount, timestamp } 用於撤銷
+      lastIntake: null, // { date, amount, timestamp } 用於撤銷
+      lastReminderTime: Date.now() // 新增：上次提醒時間
     }
   };
 }
@@ -225,6 +200,8 @@ function loadState(){
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return defaultState();
     const parsed = JSON.parse(raw);
+    // 確保舊版本資料有新的 meta 欄位
+    if (!parsed.meta.lastReminderTime) parsed.meta.lastReminderTime = Date.now(); 
     return {...defaultState(), ...parsed};
   } catch(e){
     console.warn('localStorage load fail:', e);
@@ -244,6 +221,7 @@ function saveState(){
 let state = loadState();
 let weekChart = null;
 let reminderTimer = null;
+let countdownTimer = null; // 倒數計時器
 let lottiePlayer = null;
 
 /* ---------- DOM refs (全域存取) ---------- */
@@ -275,6 +253,10 @@ const flowerGardenDisplay = document.getElementById('flowerGarden');
 const reminderMinutesInput = document.getElementById('reminderMinutes');
 const notifyBtn = document.getElementById('notifyBtn');
 
+// 新增倒數計時顯示元素
+const timerDisplayEl = document.getElementById('timerDisplay');
+
+
 /* ---------- core data helpers ---------- */
 function getDailyIntakes(dateKey){ return state.meta.dailyIntakes[dateKey] || []; }
 function getTotalFor(dateKey){ return getDailyIntakes(dateKey).reduce((s,v)=>s+v, 0); }
@@ -297,10 +279,9 @@ function popLastIntake(dateKey){
 
 /* ---------- actions ---------- */
 function onAdd(){
-  if(!addInput) return; // 確保元素存在
+  if(!addInput) return;
   
   const raw = parseFloat(addInput.value);
-  // 這裡進行純 JS 驗證，不再依賴 HTML min="1"
   if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; }
   let addMl = raw;
   if (unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
@@ -315,8 +296,10 @@ function onAdd(){
   if (prevTotal < state.settings.goal && newTotal >= state.settings.goal){
     onAchieveToday();
   } else {
-    showToast(`已新增 ${addMl} ml`);
+    // 這裡不再顯示 Toast 訊息
   }
+  // 每次成功加入後，更新提醒時間
+  state.meta.lastReminderTime = Date.now();
 }
 
 function onUndo(){
@@ -332,8 +315,9 @@ function onUndo(){
   const popped = popLastIntake(last.date);
   if (popped !== null){
     render();
-    showToast(`已撤銷 ${popped} ml`);
   }
+  // 每次成功撤銷後，更新提醒時間
+  state.meta.lastReminderTime = Date.now();
 }
 
 function onWaterFlower(){
@@ -346,7 +330,6 @@ function onWaterFlower(){
   state.meta.flowerGarden.push({ date: todayKey(), timestamp: Date.now() });
   saveState();
   render();
-  showToast('澆花成功，花園新增一朵花 🌸');
 }
 
 /* ---------- achievement / level ---------- */
@@ -361,7 +344,6 @@ function onAchieveToday(){
   saveState();
   showNotification('今日目標達成 🎉', `已達成今日目標 ${state.settings.goal} ml`);
   playBadgeUnlock();
-  showToast('今日達標！徽章已解鎖（可領取）');
 }
 
 function updateBottleLevel(){
@@ -382,8 +364,7 @@ function onClaimBadge(){
   const badge = `achieve-${todayKey()}`;
   if (!state.meta.badges.includes(badge)){
     saveState();
-    showToast('徽章已領取並加入徽章牆');
-  } else { showToast('本日徽章已領取'); }
+  }
   render();
 }
 
@@ -397,7 +378,6 @@ function onSaveSettings(){
   state.settings.unit = unitSelect.value;
   saveState();
   startReminderTimerIfNeeded(true);
-  showToast('設定已儲存');
   render();
 }
 
@@ -407,7 +387,6 @@ function onResetToday(){
   state.meta.lastIntake = null;
   saveState();
   render();
-  showToast('今日紀錄已重設');
 }
 
 function onResetAll(){
@@ -429,14 +408,12 @@ function onExport(){
   a.download = `waterhero_export_${isoDate()}.json`;
   a.click();
   URL.revokeObjectURL(url);
-  showToast('資料已匯出');
 }
 
 function onBottleNameChange(){
   if(!bottleNameInput) return;
   state.meta.bottleName = bottleNameInput.value.trim();
   saveState();
-  showToast('水瓶名稱已儲存');
 }
 
 function onUnitChange(){
@@ -455,17 +432,54 @@ function applyTheme(t){
   saveState();
 }
 
-function onToggleTheme(){
-  const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-  applyTheme(next);
-  showToast(`主題更新為 ${next}`);
+// 倒數計時功能 (新功能)
+function updateCountdown() {
+    const nextTime = (state.meta.lastReminderTime || Date.now()) + (state.settings.reminderMinutes * 60 * 1000);
+    const remainingMs = nextTime - Date.now();
+
+    if (remainingMs <= 0) {
+        if (timerDisplayEl) timerDisplayEl.textContent = '已超時';
+        return;
+    }
+
+    const totalSeconds = Math.floor(remainingMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const pad = (num) => String(num).padStart(2, '0');
+
+    if (timerDisplayEl) {
+        if (hours > 0) {
+            timerDisplayEl.textContent = `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+        } else {
+            timerDisplayEl.textContent = `${pad(minutes)}:${pad(seconds)}`;
+        }
+    }
 }
 
+
+function startCountdown() {
+    if (countdownTimer) clearInterval(countdownTimer);
+    updateCountdown(); // 立即更新一次
+    countdownTimer = setInterval(updateCountdown, 1000);
+}
+
+
+// 調整 onRequestNotify 讓它先跳出 confirm
 async function onRequestNotify(){
+    if (!confirm('確認要啟用提醒嗎？提醒將在本分頁開啟時，每隔 ' + state.settings.reminderMinutes + ' 分鐘跳出通知。')) {
+        return;
+    }
+
   if (!('Notification' in window)) { showToast('此瀏覽器不支援通知'); return; }
   try {
     const perm = await Notification.requestPermission();
-    if (perm === 'granted') { showToast('已取得通知權限（分頁開啟時生效）'); showNotification('提醒已啟用', 'WaterHero 提醒已啟用'); }
+    if (perm === 'granted') { 
+        showNotification('提醒已啟用', 'WaterHero 提醒已啟用'); 
+        state.meta.lastReminderTime = Date.now(); // 啟用時重設時間
+        startCountdown(); // 啟動倒數
+    }
     else showToast('未取得通知權限');
   } catch(e){ console.warn(e); showToast('通知啟用失敗'); }
 }
@@ -589,13 +603,14 @@ window.onload = () => {
   if (claimBadgeBtn) claimBadgeBtn.addEventListener('click', onClaimBadge);
   if (resetAllBtn) resetAllBtn.addEventListener('click', onResetAll);
   
-  // 主題與通知 (修復點：直接在此處檢查並綁定)
+  // 提醒功能 (修復點：直接在此處檢查並綁定)
   if (notifyBtn) notifyBtn.addEventListener('click', onRequestNotify);
 
   // 啟動依賴外部庫的功能
   initChart();
   initBadgeAnimation();
   startReminderTimerIfNeeded(true);
+  startCountdown(); // 啟動倒數計時
   
   // 首次渲染
   render();
