@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v2.8 — 每日喝水紀錄（佈局最終修復版）</title>
+<title>WaterHero v2.9 — 每日喝水紀錄（佈局終極修正版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -15,6 +15,12 @@
     *::before,
     *::after {
         box-sizing: border-box;
+    }
+    /* 核心佈局鎖定：確保 BODY 無邊界、無溢出 */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden !important; 
     }
     
   .glass { backdrop-filter: blur(6px); background: rgba(255,255,255,0.65); }
@@ -52,24 +58,17 @@
         box-shadow: 0 6px 18px rgba(0,0,0,0.2); 
         font-size:14px; 
     }
-    /* 最終極限優化：防止頁面溢出 */
-    body {
-        overflow-x: hidden !important; /* 確保主體不會橫向捲動 */
+    /* 核心容器寬度與置中控制 */
+    .app-container { /* 替換了原來的 max-w-3xl mx-auto p-6 */
+        width: 100%; 
+        max-width: 1024px; /* 桌面最大寬度 */
+        margin: 0 auto; /* 置中 */
+        padding: 1rem; /* 手機基礎邊距 */
+        box-sizing: border-box;
     }
-    /* 確保主容器在手機上強制佔滿，且不溢出 */
-    .max-w-3xl.mx-auto.p-6 {
-        max-width: 100% !important;
-        width: 100%;
-        padding-left: 1rem; /* 較小的左右內邊距 */
-        padding-right: 1rem;
-        box-sizing: border-box; /* 確保 padding 不會增加寬度 */
-    }
-    /* 桌面版寬度保持原樣 */
     @media (min-width: 768px) {
-        .max-w-3xl.mx-auto.p-6 {
-            max-width: 1024px !important;
-            padding: 1.5rem;
-            margin: 0 auto; 
+        .app-container {
+            padding: 1.5rem; /* 桌面邊距 */
         }
     }
 </style>
@@ -78,17 +77,17 @@
 
 <div id="toast"></div>
 
-<div class="max-w-3xl mx-auto p-6">
+<div class="app-container">
   <header class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v2.8 💧</h1>
+      <h1 class="text-2xl font-semibold">WaterHero v2.9 💧</h1>
     </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
     </div>
   </header>
 
-  <main class="grid gap-4 md:grid-cols-2">
+    <main class="grid gap-4 md:grid-cols-2">
     <form id="addForm" onsubmit="event.preventDefault();" novalidate class="md:col-span-2"> 
     <section class="p-4 rounded-2xl glass shadow">
         <div class="flex justify-between items-center mb-3">
