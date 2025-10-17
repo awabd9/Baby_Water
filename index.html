@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v1.6 — 每日喝水紀錄（無干擾最終版）</title>
+<title>WaterHero v1.5 — 每日喝水紀錄（無訊息干擾最終版）</title>
 
+<!-- 核心外部資源 -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lottie-web@5.10.1/build/player/lottie.min.js"></script>
@@ -33,6 +34,8 @@
         flex-direction:column; 
         gap:8px; 
         max-width: 90%; 
+        top: auto; /* 確保鎖定底部 */
+        left: auto;
     }
   .toast-item { 
         background: rgba(0,0,0,0.8); 
@@ -52,7 +55,8 @@
 <div class="max-w-3xl mx-auto p-6">
   <header class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v1.6 💧</h1>
+      <h1 class="text-2xl font-semibold">WaterHero v1.4 💧</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-300">務實、第一性原理解法 — 穩定、可維護、可擴充。</p>
     </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
@@ -60,7 +64,8 @@
   </header>
 
   <main class="grid gap-4">
-    <form id="addForm" onsubmit="event.preventDefault();" novalidate> 
+    <!-- 核心紀錄卡 (用 form 包裹並關閉預設驗證) -->
+    <form id="addForm" onsubmit="event.preventDefault();" novalidate> 
     <section class="p-4 rounded-2xl glass shadow">
         <div class="flex justify-between items-center mb-3">
           <div>
@@ -91,7 +96,8 @@
     </section>
     </form>
 
-        <section class="p-4 rounded-2xl glass shadow">
+    <!-- 澆花遊戲化 -->
+    <section class="p-4 rounded-2xl glass shadow">
       <h3 class="font-semibold text-lg mb-3">💧 澆花挑戰：累積與成長</h3>
       <div class="flex justify-around items-end h-48">
         <div class="water-bucket-wrapper">
@@ -108,7 +114,8 @@
       </div>
     </section>
 
-        <section class="p-4 rounded-2xl glass shadow">
+    <!-- 七日圖表 -->
+    <section class="p-4 rounded-2xl glass shadow">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold">過去 7 天紀錄</h3>
         <div class="text-sm text-slate-500 dark:text-slate-300">查看趨勢以作為行為調整依據</div>
@@ -117,7 +124,8 @@
       <div id="historyList" class="mt-3 text-sm text-slate-700 dark:text-slate-300"></div>
     </section>
 
-        <section class="p-4 rounded-2xl glass shadow grid gap-3">
+    <!-- 徽章 / 等級 -->
+    <section class="p-4 rounded-2xl glass shadow grid gap-3">
       <div class="flex items-center justify-between">
         <div>
           <div class="text-sm text-slate-500 dark:text-slate-300">水瓶名稱</div>
@@ -144,7 +152,8 @@
       </div>
     </section>
 
-        <section class="p-4 rounded-2xl glass shadow grid gap-3">
+    <!-- 系統設定 -->
+    <section class="p-4 rounded-2xl glass shadow grid gap-3">
       <h3 class="font-semibold text-lg">系統設定與操作</h3>
       <div class="flex items-center justify-between">
         <div>
@@ -297,14 +306,8 @@ function popLastIntake(dateKey){
 function onAdd(){
   if(!addInput) return;
   
-  // 注意：這裡我們依靠 form novalidate 關閉 HTML5 彈窗。
-  // 我們只在 JS 中檢查數值是否為 0 或負數。
   const raw = parseFloat(addInput.value);
-  if (!raw || raw <= 0) { 
-        showToast('請輸入大於 0 的數字'); 
-        return; 
-    }
-    
+  if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; }
   let addMl = raw;
   if (unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
 
@@ -593,6 +596,7 @@ window.onload = () => {
   if (resetAllBtn) resetAllBtn.addEventListener('click', onResetAll);
   
   // 主題與通知 (修復點：直接在此處檢查並綁定)
+  // 注意：主題按鈕已被從 HTML 移除，但保留 notifyBtn
   if (notifyBtn) notifyBtn.addEventListener('click', onRequestNotify);
 
   // 啟動依賴外部庫的功能
