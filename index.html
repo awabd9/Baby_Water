@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>WaterHero 4.0 — 每日喝水紀錄（手機完美適配版）</title>
+<title>WaterHero 4.1 — 每日喝水紀錄（最終穩定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -18,8 +18,7 @@
     margin: 0;
     padding: 0;
     width: 100%;
-    overflow-x: hidden;
-    background-color: #f3f4f6;
+    overflow-x: hidden; /* 強制消除橫向捲動 */
     /* 保持 WaterHero 原有風格的背景漸變 */
     background-image: linear-gradient(to bottom, #eff6ff, #ffffff);
   }
@@ -48,42 +47,54 @@
   .dark .flower-garden { background:#1a202c; border-color:#4a5568; }
   .flower-unit { font-size:2em; margin:3px; cursor:default; line-height:1; }
   #gardenMessage { font-size:0.9em; color:#999; padding-top:50px; text-align:center; width:100%; }
+
+    /* 關鍵修復：確保主容器置中並在手機上不推擠 */
+    .app-main-container {
+        width: 100%;
+        max-width: 1024px;
+        margin: 0 auto; /* 置中 */
+        padding: 1rem; /* 基礎內邊距 */
+        box-sizing: border-box;
+    }
 </style>
 </head>
 
-<body class="flex flex-col items-center p-4 min-h-screen text-slate-800 dark:text-slate-100">
+<body class="flex flex-col items-center min-h-screen text-slate-800 dark:text-slate-100"> 
 
-<header class="w-full max-w-md text-center mb-4 flex justify-between items-center">
-  <div class="text-left">
-    <h1 class="text-2xl font-semibold text-blue-600 dark:text-sky-400">WaterHero v4.0 💧</h1>
-    <p class="text-sm text-slate-500 dark:text-slate-300">每日喝水紀錄（手機優先版）</p>
-  </div>
-  <div class="flex items-center gap-2">
-    <button id="notifyBtn" class="px-3 py-2 rounded-lg glass text-sm active:scale-95">提醒</button>
-  </div>
-</header>
+<div id="toast"></div>
 
-<main class="w-full max-w-md flex flex-col gap-4">
+<div class="app-main-container">
+  <header class="w-full max-w-md mx-auto text-center mb-4 flex justify-between items-center">
+    <div class="text-left">
+      <h1 class="text-2xl font-semibold text-blue-600 dark:text-sky-400">WaterHero v4.1 💧</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-300">每日喝水紀錄（手機優先版）</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="notifyBtn" class="px-3 py-2 rounded-lg glass text-sm active:scale-95">提醒</button>
+    </div>
+  </header>
 
-  <form id="addForm" onsubmit="event.preventDefault();" novalidate> 
-  <section class="p-4 glass shadow flex flex-col gap-3">
-      <div class="flex justify-between items-center">
-        <div class="text-left">
-          <div class="text-sm text-slate-500 dark:text-slate-300">今日目標</div>
-          <div class="text-xl font-bold"><span id="goalDisplay">2000</span> <span id="unitLabel">ml</span></div>
-        </div>
-        <div class="text-right">
-          <div class="text-sm text-slate-500 dark:text-slate-300">已喝</div>
-          <div class="text-xl font-bold"><span id="todayTotal">0</span> <span id="unitLabel2">ml</span></div>
-        </div>
-      </div>
+  <main class="w-full max-w-md mx-auto flex flex-col gap-4">
 
-      <div class="w-full text-center text-sm">
-          <p class="font-medium text-slate-600 dark:text-slate-300">下次提醒倒數:</p>
-          <div id="timerDisplay" class="text-lg font-bold text-sky-500">
-              --:--:--
+    <form id="addForm" onsubmit="event.preventDefault();" novalidate> 
+    <section class="p-4 glass shadow flex flex-col gap-3">
+        <div class="flex justify-between items-center">
+          <div class="text-left">
+            <div class="text-sm text-slate-500 dark:text-slate-300">今日目標</div>
+            <div class="text-xl font-bold"><span id="goalDisplay">2000</span> <span id="unitLabel">ml</span></div>
           </div>
-      </div>
+          <div class="text-right">
+            <div class="text-sm text-slate-500 dark:text-slate-300">已喝</div>
+            <div class="text-xl font-bold"><span id="todayTotal">0</span> <span id="unitLabel2">ml</span></div>
+        </div>
+        </div>
+
+        <div class="w-full text-center text-sm">
+            <p class="font-medium text-slate-600 dark:text-slate-300">下次提醒倒數:</p>
+            <div id="timerDisplay" class="text-lg font-bold text-sky-500">
+                --:--:--
+            </div>
+        </div>
       
       <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-4 overflow-hidden">
         <div id="progressBar" class="bg-sky-500 h-4 rounded-full" style="width:0%;"></div>
@@ -101,7 +112,7 @@
   </section>
   </form>
 
-    <section class="p-4 glass shadow">
+    <section class="p-4 glass shadow w-full max-w-md mx-auto">
     <h3 class="font-semibold text-lg mb-3 text-center">💧 澆花挑戰：累積與成長</h3>
     <div class="flex justify-around items-end h-48">
       <div class="water-bucket-wrapper">
@@ -118,7 +129,7 @@
     </div>
   </section>
 
-    <section class="p-4 glass shadow flex flex-col gap-3">
+    <section class="p-4 glass shadow flex flex-col gap-3 w-full max-w-md mx-auto">
     <h3 class="font-semibold text-lg text-center">🏆 徽章與等級</h3>
     <div class="flex items-center justify-between">
       <div>
@@ -146,7 +157,7 @@
     </div>
   </section>
 
-    <section class="p-4 glass shadow">
+    <section class="p-4 glass shadow w-full max-w-md mx-auto">
     <h3 class="font-semibold text-lg mb-4">過去 7 天紀錄</h3>
     <div class="w-full overflow-hidden">
       <canvas id="waterChart" class="w-full"></canvas>
@@ -154,7 +165,7 @@
     <div id="historyList" class="mt-3 text-sm text-slate-700 dark:text-slate-300"></div>
   </section>
 
-    <section class="p-4 glass shadow flex flex-col gap-3">
+    <section class="p-4 glass shadow flex flex-col gap-3 w-full max-w-md mx-auto">
     <h3 class="font-semibold text-lg">系統設定與操作</h3>
     <div class="flex items-center justify-between">
       <div>
@@ -221,7 +232,7 @@ function loadState(){
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return defaultState();
     const parsed = JSON.parse(raw);
-    if (!parsed.meta.lastReminderTime) parsed.meta.lastReminderTime = Date.now(); 
+    if (!parsed.meta.lastReminderTime) parsed.meta.lastReminderTime = Date.now(); 
     return {...defaultState(), ...parsed};
   } catch(e){
     console.warn('localStorage load fail:', e);
@@ -299,9 +310,10 @@ function popLastIntake(dateKey){
 
 /* ---------- actions ---------- */
 function onAdd(){
-  if(!addInput) return;
-  
+  if(!addInput) return; // 確保元素存在
+  
   const raw = parseFloat(addInput.value);
+  // 這裡進行純 JS 驗證
   if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; }
   let addMl = raw;
   if (unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
@@ -316,7 +328,7 @@ function onAdd(){
   if (prevTotal < state.settings.goal && newTotal >= state.settings.goal){
     onAchieveToday();
   } else {
-    console.log(`已新增 ${addMl} ml`);
+    console.log(`已新增 ${addMl} ml`); // 訊息導向 Console
   }
   state.meta.lastReminderTime = Date.now();
 }
@@ -324,13 +336,13 @@ function onAdd(){
 function onUndo(){
   const last = state.meta.lastIntake;
   if (!last) { console.log('錯誤: 無可撤銷的紀錄'); return; }
-  
+  
   const todayIntakes = getDailyIntakes(todayKey());
   if (todayIntakes.length === 0 || todayIntakes[todayIntakes.length - 1] !== last.amount || last.date !== todayKey()){
     console.log('錯誤: 只能撤銷上一次單筆喝水記錄');
     return;
   }
-  
+  
   const popped = popLastIntake(last.date);
   if (popped !== null){
     render();
@@ -357,7 +369,7 @@ function onAchieveToday(){
   const yesterday = isoDate(new Date(Date.now() - MILLI_PER_DAY));
   const yesterdayReached = getTotalFor(yesterday) >= state.settings.goal;
 
-  if (yesterdayReached && state.meta.lastAchieved === yesterday){ state.meta.streak = (state.meta.streak || 0) + 1; } 
+  if (yesterdayReached && state.meta.lastAchieved === yesterday){ state.meta.streak = (state.meta.streak || 0) + 1; } 
   else { state.meta.streak = yesterdayReached ? (state.meta.streak || 0) + 1 : 1; }
   state.meta.lastAchieved = todayKey();
   updateBottleLevel();
@@ -466,50 +478,50 @@ function onToggleTheme(){
 
 // 倒數計時功能 (新功能)
 function updateCountdown() {
-    if(!timerDisplayEl) return;
-    const nextTime = (state.meta.lastReminderTime || Date.now()) + (state.settings.reminderMinutes * 60 * 1000);
-    const remainingMs = nextTime - Date.now();
+    if(!timerDisplayEl) return;
+    const nextTime = (state.meta.lastReminderTime || Date.now()) + (state.settings.reminderMinutes * 60 * 1000);
+    const remainingMs = nextTime - Date.now();
 
-    if (remainingMs <= 0) {
-        timerDisplayEl.textContent = '已超時';
-        return;
-    }
+    if (remainingMs <= 0) {
+        timerDisplayEl.textContent = '已超時';
+        return;
+    }
 
-    const totalSeconds = Math.floor(remainingMs / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+    const totalSeconds = Math.floor(remainingMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
 
-    const pad = (num) => String(num).padStart(2, '0');
+    const pad = (num) => String(num).padStart(2, '0');
 
-    if (hours > 0) {
-        timerDisplayEl.textContent = `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
-    } else {
-        timerDisplayEl.textContent = `${pad(minutes)}:${pad(seconds)}`;
-    }
+    if (hours > 0) {
+        timerDisplayEl.textContent = `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+    } else {
+        timerDisplayEl.textContent = `${pad(minutes)}:${pad(seconds)}`;
+    }
 }
 
 
 function startCountdown() {
-    if (countdownTimer) clearInterval(countdownTimer);
-    updateCountdown(); // 立即更新一次
-    countdownTimer = setInterval(updateCountdown, 1000);
+    if (countdownTimer) clearInterval(countdownTimer);
+    updateCountdown(); // 立即更新一次
+    countdownTimer = setInterval(updateCountdown, 1000);
 }
 
 
 async function onRequestNotify(){
   if (!confirm('確認要啟用提醒嗎？提醒將在本分頁開啟時，每隔 ' + state.settings.reminderMinutes + ' 分鐘跳出通知。')) {
-        return;
-    }
+        return;
+    }
   if (!('Notification' in window)) { console.log('此瀏覽器不支援通知'); return; }
   try {
     const perm = await Notification.requestPermission();
-    if (perm === 'granted') { 
-        console.log('已取得通知權限（分頁開啟時生效）'); 
-        showNotification('提醒已啟用', 'WaterHero 提醒已啟用'); 
-        state.meta.lastReminderTime = Date.now(); // 啟用時重設時間
-        startCountdown(); // 啟動倒數
-    }
+    if (perm === 'granted') { 
+        console.log('已取得通知權限（分頁開啟時生效）'); 
+        showNotification('提醒已啟用', 'WaterHero 提醒已啟用'); 
+        state.meta.lastReminderTime = Date.now(); // 啟用時重設時間
+        startCountdown(); // 啟動倒數
+    }
     else console.log('未取得通知權限');
   } catch(e){ console.warn(e); console.log('通知啟用失敗'); }
 }
@@ -623,7 +635,7 @@ window.onload = () => {
   if (addInput) addInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') onAdd(); });
   if (undoBtn) undoBtn.addEventListener('click', onUndo);
   if (waterFlowerBtn) waterFlowerBtn.addEventListener('click', onWaterFlower);
-  
+  
   // 綁定設置與輔助事件
   if (saveSettings) saveSettings.addEventListener('click', onSaveSettings);
   if (resetTodayBtn) resetTodayBtn.addEventListener('click', onResetToday);
@@ -632,7 +644,7 @@ window.onload = () => {
   if (bottleNameInput) bottleNameInput.addEventListener('change', onBottleNameChange);
   if (claimBadgeBtn) claimBadgeBtn.addEventListener('click', onClaimBadge);
   if (resetAllBtn) resetAllBtn.addEventListener('click', onResetAll);
-  
+  
   // 提醒功能 (修復點：直接在此處檢查並綁定)
   if (notifyBtn) notifyBtn.addEventListener('click', onRequestNotify);
 
@@ -640,7 +652,7 @@ window.onload = () => {
   initChart();
   initBadgeAnimation();
   startCountdown(); // 啟動倒數計時
-  
+  
   // 首次渲染
   render();
 };
