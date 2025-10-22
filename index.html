@@ -2,660 +2,602 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>WaterHero v3.5 — 每日喝水紀錄（最終穩定版）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>WaterHero v3.6 — 每日喝水紀錄（手機單頁）</title>
 
+<!-- Tailwind CDN for quick styling -->
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lottie-web@5.10.1/build/player/lottie.min.js"></script>
 
 <style>
-  /* 採納 GPT 的手機友好 CSS 鎖定 */
-  * {
-    box-sizing: border-box;
-  }
-  html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    overflow-x: hidden;
-    background-color: #f3f4f6;
-    /* 保持 WaterHero 原有風格的背景漸變 */
-    background-image: linear-gradient(to bottom, #eff6ff, #ffffff);
-  }
-  .dark body {
-    background-image: linear-gradient(to bottom, #0f172a, #1e293b);
-  }
-  canvas {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-  .glass {
-    backdrop-filter: blur(8px);
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 1rem;
-    padding: 1rem;
-  }
-  .dark .glass {
-    background: rgba(17,24,39,0.7);
-  }
-  .badge-anim { width: 92px; height: 92px; }
+  /* Mobile-first clean layout */
+  :root { -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; }
+  html,body { height:100%; margin:0; padding:0; background: linear-gradient(180deg,#eef8ff,#ffffff); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+  body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Arial; color:#0f172a; display:flex; justify-content:center; padding:16px 12px; }
+  .app { width:100%; max-width:420px; }
+  .glass { background:rgba(255,255,255,0.85); backdrop-filter: blur(6px); border-radius:14px; padding:14px; box-shadow:0 6px 20px rgba(14,30,37,0.06); }
+  h1 { font-weight:700; color:#0ea5e9; }
+  .progress { height:10px; background:#e6eef8; border-radius:999px; overflow:hidden; }
+  .progress > .fill { height:100%; width:0%; background:linear-gradient(90deg,#38bdf8,#0ea5e9); transition:width 400ms ease; }
+  .water-bucket { width:72px; height:140px; border-radius:8px 8px 20px 20px; position:relative; overflow:hidden; margin:0 auto; }
+  .bucket-outline { position:absolute; inset:0; border:5px solid #9aa6b2; border-top-width:10px; border-radius:8px 8px 20px 20px; pointer-events:none; box-sizing:border-box; }
+  .water-level { position:absolute; left:0; bottom:0; width:100%; height:0%; background:linear-gradient(180deg,#60a5fa,#93c5fd); transition:height .7s ease; border-radius:0 0 14px 14px; }
+  .flower-garden { display:flex; flex-wrap:wrap; gap:6px; padding:6px; min-height:80px; max-height:150px; overflow:auto; border-radius:10px; border:1px dashed #cde7ff; background:#fbffff; align-items:flex-end; justify-content:center; }
+  .flower { font-size:1.5rem; transform-origin:center bottom; transition: transform .25s ease; }
+  .btn-row { display:flex; gap:8px; flex-wrap:wrap; }
+  .btn-row button { flex:1 1 0; padding:10px 12px; border-radius:10px; font-weight:600; }
+  .small { font-size:.9rem; color:#475569; }
+  canvas { display:block; width:100% !important; height:160px !important; }
 
-  /* 遊戲化區塊 */
-  .water-bucket-wrapper { position: relative; width: 80px; height: 150px; border-radius: 5px 5px 20px 20px; overflow: hidden; margin:0 auto; }
-  .bucket-outline { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 5px solid #a0a0a0; border-top: 10px solid #888; border-radius: 5px 5px 20px 20px; box-sizing: border-box; pointer-events: none; }
-  .water-level { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(to top, #007bff, #4dc3ff); transition: height 0.8s ease-out; border-radius: 0 0 15px 15px; }
-  .flower-garden { display:flex; flex-wrap:wrap; justify-content:center; align-content:flex-start; width:100%; height:150px; overflow-y:auto; padding:5px; border-radius:10px; margin-bottom:10px; border:1px dashed #c4d7e9; background:#f7fff7; position:relative; }
-  .dark .flower-garden { background:#1a202c; border-color:#4a5568; }
-  .flower-unit { font-size:2em; margin:3px; line-height:1;}
-  #gardenMessage { font-size:0.9em; color:#999; padding-top:50px; text-align:center; width:100%; }
-
-    /* 按鈕排版 */
-    .btn-row { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.5rem; }
-    .btn-row button { 
-        flex:1 1 0; /* 確保自動分配寬度 */
-        padding: 0.75rem 0.5rem; /* 縮小左右 padding (px-2) */
-        font-size: 1rem;
-    }
+  /* responsive tweaks */
+  @media (min-width:600px) { .app { padding:12px; } }
 </style>
 </head>
-<body class="flex flex-col items-center p-4 min-h-screen text-slate-800 dark:text-slate-100">
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-xl">WaterHero v3.6</h1>
+        <div class="small">手機單頁 • 本機儲存 • 功能完整</div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="notifyBtn" class="glass px-3 py-2 rounded-lg text-sm">提醒</button>
+      </div>
+    </header>
 
-<div id="toast"></div>
+    <main class="space-y-4">
+      <!-- Today summary & input -->
+      <section class="glass">
+        <div class="flex justify-between items-center mb-3">
+          <div>
+            <div class="small">今日目標</div>
+            <div class="text-lg font-bold"><span id="goalDisplay">2000</span> ml</div>
+          </div>
+          <div class="text-right">
+            <div class="small">已喝</div>
+            <div class="text-lg font-bold"><span id="todayTotal">0</span> ml</div>
+          </div>
+        </div>
 
-<div class="w-full max-w-md"> 
-  <header class="w-full text-center mb-4 flex justify-between items-center">
-    <div class="text-left">
-      <h1 class="text-2xl font-semibold text-blue-600 dark:text-sky-400">WaterHero v3.5 💧</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-300">每日喝水紀錄（最終穩定版）</p>
-    </div>
-    <div class="flex items-center gap-2">
-      <button id="notifyBtn" class="px-3 py-2 rounded-lg glass text-sm active:scale-95">提醒</button>
-  </div>
-  </header>
+        <div class="text-center mb-3 small">下次提醒倒數: <span id="timerDisplay" class="font-medium">--:--:--</span></div>
 
-<main class="w-full max-w-md flex flex-col gap-4">
+        <div class="progress mb-3" aria-hidden="true"><div id="progressFill" class="fill"></div></div>
 
-  <form id="addForm" onsubmit="event.preventDefault();" novalidate> 
-  <section class="glass flex flex-col gap-3">
-      <div class="flex justify-between items-center">
-        <div class="text-left">
-          <div class="text-sm text-gray-500 dark:text-slate-300">今日目標</div>
-          <div class="text-xl font-bold"><span id="goalDisplay">2000</span> ml</div>
-        </div>
-        <div class="text-right">
-          <div class="text-sm text-gray-500 dark:text-slate-300">已喝</div>
-          <div class="text-xl font-bold"><span id="todayTotal">0</span> ml</div>
-        </div>
-      </div>
+        <div class="flex gap-2 mb-3">
+          <input id="addInput" type="number" inputmode="numeric" placeholder="輸入喝水量（例如 250）" class="flex-1 border rounded-lg px-3 py-2" />
+          <select id="unitSelect" class="border rounded-lg px-3 py-2">
+            <option value="ml">ml</option>
+            <option value="cup">杯（250ml）</option>
+          </select>
+        </div>
 
-      <div class="w-full text-center text-sm">
-          <p class="font-medium text-slate-600 dark:text-slate-300">下次提醒倒數:</p>
-          <div id="timerDisplay" class="text-lg font-bold text-sky-500">
-              --:--:--
-          </div>
-      </div>
-      
-      <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-4 overflow-hidden">
-        <div id="progressBar" class="bg-sky-500 h-4 rounded-full" style="width:0%;"></div>
-      </div>
+        <div class="btn-row">
+          <button id="addBtn" class="bg-sky-500 text-white">加入</button>
+          <button id="undoBtn" class="bg-red-500 text-white">撤銷</button>
+          <button id="resetToday" class="bg-amber-400 text-white">重設今日</button>
+          <button id="resetAll" class="bg-gray-700 text-white">重設全部</button>
+        </div>
+      </section>
 
-      <div class="flex items-center gap-2">
-        <input id="addInput" type="number" placeholder="輸入喝水量" class="flex-1 border rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800">
-        <select id="unitSelect" class="border rounded-lg p-2.5 bg-white dark:bg-slate-800">
-          <option value="ml">ml</option>
-          <option value="cup">杯</option>
-        </select>
-      </div>
+      <!-- Flower area -->
+      <section class="glass">
+        <h3 class="text-base font-semibold text-center mb-3">💧 澆花挑戰（累積 1000ml）</h3>
+        <div class="flex items-end gap-4">
+          <div class="water-bucket">
+            <div id="waterLevel" class="water-level" style="height:0%"></div>
+            <div class="bucket-outline" aria-hidden="true"></div>
+          </div>
 
-      <div class="btn-row"> 
-        <button id="addBtn" class="bg-sky-600 text-white rounded-lg">加入</button> 
-        <button id="undoBtn" class="bg-red-500 text-white rounded-lg" title="撤銷上一筆記錄">撤銷 ↶</button>
-      </div>
-  </section>
-  </form>
+          <div class="flex-1">
+            <div id="flowerGarden" class="flower-garden"><div id="gardenMessage" class="small">你的花園還空空的，開始喝水吧。</div></div>
+            <div class="mt-2">
+              <button id="waterFlower" class="w-full py-2 rounded-lg bg-green-600 text-white" disabled>澆花 (1000 ml)</button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <section class="glass">
-    <h3 class="font-semibold text-lg mb-3 text-center">💧 澆花挑戰：累積與成長</h3>
-    <div class="flex justify-around items-end h-48">
-      <div class="water-bucket-wrapper">
-        <div id="waterLevel" class="water-level"></div>
-        <div class="bucket-outline"></div>
-      </div>
+      <!-- Bottle & badges -->
+      <section class="glass">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <div class="small">水瓶名稱</div>
+            <input id="bottleName" class="border rounded-lg px-3 py-2 mt-1" placeholder="為你的水瓶命名（輸入後按確定）" />
+          </div>
+          <div class="text-right">
+            <div class="small">等級</div>
+            <div id="bottleLevel" class="text-lg font-bold">Lv.1</div>
+          </div>
+        </div>
+        <div class="flex gap-2 mb-3">
+          <button id="bottleConfirm" class="flex-1 bg-sky-600 text-white py-2 rounded-lg">確定</button>
+          <button id="claimBadge" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg">領取徽章</button>
+        </div>
 
-      <div class="w-2/3 flex flex-col items-center justify-end h-full">
-        <div id="flowerGarden" class="flower-garden"></div>
-        <button id="waterFlowerBtn" disabled class="w-full py-2 rounded-lg bg-green-600 text-white mt-2">💧 澆花 (1000ml)</button>
-      </div>
-    </div>
-  </section>
+        <div class="small mb-2">連續達標 (streak): <span id="streakCount">0</span></div>
+        <div id="badgeContainer" class="flex flex-wrap gap-2"></div>
+      </section>
 
-        <section class="glass flex flex-col gap-3">
-    <h3 class="font-semibold text-lg text-center">🏆 徽章與等級</h3>
-    <div class="flex items-center justify-between">
-      <div>
-        <div class="text-sm text-slate-500 dark:text-slate-300">水瓶名稱</div>
-        <input id="bottleName" class="p-2 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="為你的水瓶命名">
-      </div>
-      <div class="text-right">
-        <div class="text-sm text-slate-500 dark:text-slate-300">等級</div>
-        <div class="text-lg font-bold" id="bottleLevel">Lv.1</div>
-      </div>
-    </div>
+      <!-- Charts -->
+      <section class="glass">
+        <h3 class="text-base font-semibold mb-2">📊 今日喝水分布</h3>
+        <canvas id="todayChart"></canvas>
+      </section>
 
-    <div class="flex items-center gap-6">
-      <div id="badgeContainer" class="badge-anim"></div>
-      <div>
-        <div class="text-sm text-slate-500 dark:text-slate-300">連續達標 (streak)</div>
-        <div class="text-2xl font-bold" id="streakCount">0</div>
-        <div class="text-sm text-slate-500 dark:text-slate-300 mt-1" id="streakHint">連續達成每日目標可提升等級並解鎖徽章</div>
-      </div>
-    </div>
+      <section class="glass">
+        <h3 class="text-base font-semibold mb-2">📈 過去 7 天記錄</h3>
+        <canvas id="weekChart"></canvas>
+        <div id="historyList" class="mt-3 small text-slate-600"></div>
+      </section>
 
-    <div class="btn-stack flex-row justify-center">
-      <button id="claimBadge" class="bg-indigo-600 text-white">領取徽章（達成時可點）</button>
-      <button id="resetAll" class="bg-red-600 text-white">重設所有資料</button>
-    </div>
-  </section>
+      <!-- Settings -->
+      <section class="glass">
+        <h3 class="small font-semibold mb-2">系統設定</h3>
+        <div class="flex items-center gap-2 mb-3">
+          <div class="flex-1">
+            <div class="small">每日目標 (ml)</div>
+            <input id="goalInput" type="number" min="100" class="border rounded-lg px-3 py-2 mt-1" value="2000">
+          </div>
+          <div style="width:110px">
+            <div class="small">提醒 (分鐘)</div>
+            <input id="reminderMinutes" type="number" min="10" class="border rounded-lg px-3 py-2 mt-1 w-full" value="120">
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button id="saveSettings" class="flex-1 bg-green-600 text-white py-2 rounded-lg">儲存設定</button>
+          <button id="exportBtn" class="flex-1 bg-slate-600 text-white py-2 rounded-lg">匯出資料</button>
+        </div>
+        <div class="small mt-2 text-slate-600">說明：提醒需允許瀏覽器通知；資料儲存在本機 localStorage，不會上傳。</div>
+      </section>
+    </main>
 
-    <section class="p-4 glass shadow">
-    <h3 class="font-semibold text-lg mb-4">過去 7 天紀錄</h3>
-    <div class="w-full overflow-hidden">
-      <canvas id="waterChart" class="w-full"></canvas>
-    </div>
-    <div id="historyList" class="mt-3 text-sm text-slate-700 dark:text-slate-300"></div>
-  </section>
-
-    <section class="p-4 glass shadow flex flex-col gap-3">
-    <h3 class="font-semibold text-lg">系統設定與操作</h3>
-    <div class="flex items-center justify-between">
-      <div>
-        <div class="text-sm text-slate-500 dark:text-slate-300">每日目標 (ml)</div>
-        <input id="goalInput" type="number" min="100" class="p-2 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" value="2000">
-      </div>
-      <div class="text-right">
-        <div class="text-sm text-slate-500 dark:text-slate-300">提醒間隔</div>
-        <div class="flex gap-2 mt-1">
-          <input id="reminderMinutes" type="number" min="10" value="120" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 w-24">
-          <div class="self-center text-sm">分鐘</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="btn-stack flex-row justify-between">
-      <button id="saveSettings" class="bg-green-600 text-white">儲存設定</button>
-      <button id="resetToday" class="bg-amber-500 text-white">重設今日</button>
-      <button id="exportBtn" class="bg-slate-600 text-white">匯出資料</button>
-    </div>
-    <div class="text-sm text-slate-500 dark:text-slate-300">說明：資料存於本機，不會上傳。</div>
-  </section>
-
-</main>
-
-<footer class="text-xs text-gray-400 mt-4 mb-2">© 2025 WaterHero - 穩定版</footer>
-
+    <footer class="text-center small text-slate-400 mt-4">© 2025 WaterHero</footer>
+  </div>
 
 <script>
-/*
-  WaterHero v3.0 - 最終穩定版 (手機優先佈局)
-*/
+/* =========================
+   WaterHero v3.6 - client only
+   ========================= */
 
-const LS_KEY = 'waterhero_v1';
+const LS_KEY = 'waterhero_v3.6';
+const WATER_FOR_FLOWER = 1000;
 const MILLI_PER_DAY = 24*3600*1000;
-const WATER_NEEDED_FOR_FLOWER = 1000;
-const FINAL_FLOWER_ICON = "🌸";
 
-/* ---------- Helpers ---------- */
-function isoDate(d = new Date()){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().split('T')[0]; }
-function showToast(msg, timeout = 3000){ console.log("TOAST:", msg); } // 訊息導向 Console
-
-/* ---------- state + persistence ---------- */
+/* ---------- default state ---------- */
 function defaultState(){
-  return {
-    settings: { goal: 2000, unit: 'ml', reminderMinutes: 120, theme: 'light' },
-    meta: {
-      dailyIntakes: {},
-      bucketAmount: 0,
-      flowerGarden: [],
-      streak: 0,
-      lastAchieved: null,
-      level: 1,
-      badges: [],
-      bottleName: '',
-      lastIntake: null, // { date, amount, timestamp } 用於撤銷
-      lastReminderTime: Date.now() // 新增：上次提醒時間
-    }
-  };
+  return {
+    settings: { goal:2000, unit:'ml', reminderMinutes:120, theme:'light' },
+    meta: {
+      dailyIntakes: {}, // { "YYYY-MM-DD": [ {amount, ts} ] }
+      bucketAmount: 0,
+      flowerGarden: [], // array of {date, ts}
+      streak: 0,
+      lastAchieved: null,
+      level: 1,
+      xp: 0,
+      badges: [], // strings
+      bottleName: '',
+      lastIntake: null, // {date, amount, ts}
+      lastReminderTime: Date.now()
+    }
+  };
 }
 
+/* ---------- persistence ---------- */
 function loadState(){
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return defaultState();
-    const parsed = JSON.parse(raw);
-    if (!parsed.meta.lastReminderTime) parsed.meta.lastReminderTime = Date.now(); 
-    return {...defaultState(), ...parsed};
-  } catch(e){
-    console.warn('localStorage load fail:', e);
-    return defaultState();
-  }
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    // safety defaults
+    if(!parsed.meta) parsed.meta = defaultState().meta;
+    if(!parsed.settings) parsed.settings = defaultState().settings;
+    return {...defaultState(), ...parsed};
+  }catch(e){
+    console.warn('load fail', e);
+    return defaultState();
+  }
 }
-
 function saveState(){
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(state));
-  } catch(e){
-    console.warn('localStorage save fail：', e);
-  }
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+  catch(e){ console.warn('save fail', e); }
 }
 
-/* ---------- app state (全域存取) ---------- */
+/* ---------- app state ---------- */
 let state = loadState();
-let weekChart = null;
-let reminderTimer = null;
-let countdownTimer = null; // 倒數計時器
-let lottiePlayer = null;
 
-/* ---------- DOM refs (全域存取) ---------- */
-const todayKey = () => isoDate();
+/* ---------- DOM refs ---------- */
 const goalDisplay = document.getElementById('goalDisplay');
 const todayTotalEl = document.getElementById('todayTotal');
-const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
 const addInput = document.getElementById('addInput');
 const addBtn = document.getElementById('addBtn');
 const undoBtn = document.getElementById('undoBtn');
 const unitSelect = document.getElementById('unitSelect');
-const unitLabel = document.getElementById('unitLabel');
-const unitLabel2 = document.getElementById('unitLabel2');
-const goalInput = document.getElementById('goalInput');
-const saveSettings = document.getElementById('saveSettings');
-const resetTodayBtn = document.getElementById('resetToday');
-const weekChartCtx = document.getElementById('waterChart'); // 注意：ID 改為 waterChart
-const historyList = document.getElementById('historyList');
-const exportBtn = document.getElementById('exportBtn');
+const resetToday = document.getElementById('resetToday');
+const resetAll = document.getElementById('resetAll');
+const waterLevel = document.getElementById('waterLevel');
+const waterFlowerBtn = document.getElementById('waterFlower');
+const flowerGarden = document.getElementById('flowerGarden');
+const gardenMessage = document.getElementById('gardenMessage');
 const bottleNameInput = document.getElementById('bottleName');
+const bottleConfirm = document.getElementById('bottleConfirm');
 const bottleLevelEl = document.getElementById('bottleLevel');
 const streakCountEl = document.getElementById('streakCount');
 const badgeContainer = document.getElementById('badgeContainer');
 const claimBadgeBtn = document.getElementById('claimBadge');
-const resetAllBtn = document.getElementById('resetAll');
-const waterLevelDisplay = document.getElementById('waterLevel');
-const waterFlowerBtn = document.getElementById('waterFlowerBtn');
-const flowerGardenDisplay = document.getElementById('flowerGarden');
-const reminderMinutesInput = document.getElementById('reminderMinutes');
+const todayChartCtx = document.getElementById('todayChart').getContext('2d');
+const weekChartCtx = document.getElementById('weekChart').getContext('2d');
+const historyList = document.getElementById('historyList');
 const notifyBtn = document.getElementById('notifyBtn');
+const timerDisplay = document.getElementById('timerDisplay');
+const saveSettingsBtn = document.getElementById('saveSettings');
+const goalInput = document.getElementById('goalInput');
+const reminderMinutesInput = document.getElementById('reminderMinutes');
+const exportBtn = document.getElementById('exportBtn');
 
-// 新增倒數計時顯示元素
-const timerDisplayEl = document.getElementById('timerDisplay');
+/* ---------- helper utils ---------- */
+function isoDate(d = new Date()){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().split('T')[0]; }
+function fmtTime(ts){ const d = new Date(ts); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
 
+/* ---------- chart setup ---------- */
+const todayChart = new Chart(todayChartCtx, {
+  type:'bar',
+  data:{ labels:[], datasets:[{ label:'每次喝水 (ml)', data:[], borderRadius:6, barPercentage:0.7 }]},
+  options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false}}, y:{beginAtZero:true} } }
+});
+const weekChart = new Chart(weekChartCtx, {
+  type:'bar',
+  data:{ labels:[], datasets:[{ label:'每日總量 (ml)', data:[], borderRadius:6, barPercentage:0.6, backgroundColor:'#60a5fa' }]},
+  options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false}}, y:{beginAtZero:true} } }
+});
 
 /* ---------- core data helpers ---------- */
-function getDailyIntakes(dateKey){ return state.meta.dailyIntakes[dateKey] || []; }
-function getTotalFor(dateKey){ return getDailyIntakes(dateKey).reduce((s,v)=>s+v, 0); }
+function getDailyList(dateKey){ return state.meta.dailyIntakes[dateKey] || []; }
+function getTotalFor(dateKey){ return getDailyList(dateKey).reduce((s,r)=>s+r.amount, 0); }
 function pushIntake(dateKey, amount){
-  if (!state.meta.dailyIntakes[dateKey]) state.meta.dailyIntakes[dateKey] = [];
-  state.meta.dailyIntakes[dateKey].push(amount);
-  state.meta.bucketAmount = (state.meta.bucketAmount || 0) + amount;
-  state.meta.lastIntake = { date: dateKey, amount, timestamp: Date.now() };
-  saveState();
+  if(!state.meta.dailyIntakes[dateKey]) state.meta.dailyIntakes[dateKey] = [];
+  const entry = { amount, ts: Date.now() };
+  state.meta.dailyIntakes[dateKey].push(entry);
+  state.meta.bucketAmount = (state.meta.bucketAmount || 0) + amount;
+  state.meta.lastIntake = { date: dateKey, amount, ts: Date.now() };
+  saveState();
 }
 function popLastIntake(dateKey){
-  const arr = getDailyIntakes(dateKey);
-  if (!arr || arr.length === 0) return null;
-  const val = arr.pop();
-  state.meta.bucketAmount = Math.max(0, (state.meta.bucketAmount || 0) - val);
-  state.meta.lastIntake = null;
-  saveState();
-  return val;
+  const arr = state.meta.dailyIntakes[dateKey] || [];
+  if(arr.length === 0) return null;
+  const last = arr.pop();
+  state.meta.bucketAmount = Math.max(0, (state.meta.bucketAmount || 0) - last.amount);
+  state.meta.lastIntake = null;
+  saveState();
+  return last;
+}
+
+/* ---------- achievement logic ---------- */
+function awardDailyBadge(dateKey){
+  const badgeId = `achieve-${dateKey}`;
+  if(!state.meta.badges.includes(badgeId)){
+    state.meta.badges.push(badgeId);
+    // XP and streak handled in onAchieveToday
+  }
+}
+function updateBottleLevelFromXp(){
+  const xp = state.meta.xp || 0;
+  // simple level curve: level = 1 + floor(xp / 3)
+  const newLevel = Math.floor(xp / 3) + 1;
+  state.meta.level = newLevel;
+}
+
+/* ---------- UI render ---------- */
+function renderGarden(){
+  const g = state.meta.flowerGarden || [];
+  flowerGarden.innerHTML = '';
+  if(g.length === 0){
+    gardenMessage.style.display = 'block';
+  } else {
+    gardenMessage.style.display = 'none';
+    g.forEach(()=> {
+      const el = document.createElement('div');
+      el.className = 'flower';
+      el.textContent = '🌸';
+      flowerGarden.appendChild(el);
+      // simple pop-in
+      requestAnimationFrame(()=> el.style.transform = 'scale(1.05)');
+      setTimeout(()=> el.style.transform = '', 260);
+    });
+  }
+}
+
+function renderBadges(){
+  badgeContainer.innerHTML = '';
+  (state.meta.badges || []).forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'px-2 py-1 rounded bg-sky-100 text-sky-700 text-sm';
+    el.textContent = b;
+    badgeContainer.appendChild(el);
+  });
+}
+
+function renderHistoryList(){
+  const keys = Object.keys(state.meta.dailyIntakes).sort().slice(-14).reverse();
+  if(keys.length === 0){
+    historyList.innerHTML = '<div class="small text-slate-500">尚無紀錄</div>';
+    return;
+  }
+  let html = '';
+  keys.forEach(k => {
+    const total = getTotalFor(k);
+    const details = (state.meta.dailyIntakes[k]||[]).map(it => it.amount).join(' + ');
+    html += `<div class="py-2 border-b border-slate-100"><div class="flex justify-between font-semibold"><span>${k}</span><span>${total} ml</span></div><div class="small text-slate-500">詳情: ${details} ml</div></div>`;
+  });
+  historyList.innerHTML = html;
+}
+
+function renderCharts(){
+  // today chart: each intake's time and amount
+  const todayKey = isoDate();
+  const list = state.meta.dailyIntakes[todayKey] || [];
+  todayChart.data.labels = list.map(it => {
+    const d = new Date(it.ts);
+    return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  });
+  todayChart.data.datasets[0].data = list.map(it => it.amount);
+  todayChart.update();
+
+  // week chart: 7 days totals
+  const labels = [];
+  const datapoints = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(Date.now() - i*MILLI_PER_DAY);
+    const k = isoDate(d);
+    labels.push(k.slice(5));
+    datapoints.push(getTotalFor(k));
+  }
+  weekChart.data.labels = labels;
+  weekChart.data.datasets[0].data = datapoints;
+  weekChart.update();
+}
+
+function renderMain(){
+  // goal & totals
+  goalDisplay.textContent = state.settings.goal;
+  const todayKeyStr = isoDate();
+  const todayTotal = getTotalFor(todayKeyStr);
+  todayTotalEl.textContent = Math.round(todayTotal);
+  // progress
+  const pct = clamp(Math.round(todayTotal / state.settings.goal * 100), 0, 100);
+  progressFill.style.width = pct + '%';
+  // bucket water level (we store bucketAmount in ml)
+  const maxCap = WATER_FOR_FLOWER * 2;
+  const levelPct = clamp(Math.round(state.meta.bucketAmount / maxCap * 100), 0, 100);
+  waterLevel.style.height = levelPct + '%';
+
+  // enable/disable flower
+  waterFlowerBtn.disabled = (state.meta.bucketAmount < WATER_FOR_FLOWER);
+
+  // bottle, streak, badges
+  bottleLevelEl.textContent = 'Lv.' + (state.meta.level || 1);
+  streakCountEl.textContent = state.meta.streak || 0;
+  bottleNameInput.value = state.meta.bottleName || '';
+
+  renderGarden();
+  renderBadges();
+  renderHistoryList();
+  renderCharts();
+  saveState();
 }
 
 /* ---------- actions ---------- */
 function onAdd(){
-  if(!addInput) return; // 確保元素存在
-  
-  const raw = parseFloat(addInput.value);
-  if (!raw || raw <= 0) { showToast('請輸入大於 0 的數字'); return; }
-  let addMl = raw;
-  if (unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
-
-  const key = todayKey();
-  pushIntake(key, addMl);
-  addInput.value = '';
-  render();
-
-  const prevTotal = getTotalFor(key) - addMl;
-  const newTotal = getTotalFor(key);
-  if (prevTotal < state.settings.goal && newTotal >= state.settings.goal){
-    onAchieveToday();
-  } else {
-    console.log(`已新增 ${addMl} ml`);
-  }
-  state.meta.lastReminderTime = Date.now();
+  const raw = parseFloat(addInput.value);
+  if(!raw || raw <= 0){ alert('請輸入大於 0 的數字'); return; }
+  let addMl = raw;
+  if(unitSelect && unitSelect.value === 'cup') addMl = raw * 250;
+  const key = isoDate();
+  pushIntake(key, addMl);
+  addInput.value = '';
+  // check achieve
+  const prev = getTotalFor(key) - addMl;
+  const now = getTotalFor(key);
+  if(prev < state.settings.goal && now >= state.settings.goal){
+    // achieved today
+    onAchieveToday();
+  }
+  state.meta.lastReminderTime = Date.now();
+  renderMain();
 }
 
 function onUndo(){
-  const last = state.meta.lastIntake;
-  if (!last) { console.log('錯誤: 無可撤銷的紀錄'); return; }
-  
-  const todayIntakes = getDailyIntakes(todayKey());
-  if (todayIntakes.length === 0 || todayIntakes[todayIntakes.length - 1] !== last.amount || last.date !== todayKey()){
-    console.log('錯誤: 只能撤銷上一次單筆喝水記錄');
-    return;
-  }
-  
-  const popped = popLastIntake(last.date);
-  if (popped !== null){
-    render();
-    console.log(`已撤銷 ${popped} ml`);
-  }
-  state.meta.lastReminderTime = Date.now();
+  const last = state.meta.lastIntake;
+  if(!last){ alert('無可撤銷的記錄'); return; }
+  if(last.date !== isoDate()){ alert('只能撤銷今日最後一筆'); return; }
+  const todayArr = state.meta.dailyIntakes[last.date] || [];
+  if(todayArr.length === 0 || todayArr[todayArr.length -1].amount !== last.amount){ alert('無法撤銷：最後紀錄不符'); return; }
+  popLastIntake(last.date);
+  renderMain();
 }
 
-function onWaterFlower(){
-  if (!waterFlowerBtn) return;
-  if ((state.meta.bucketAmount || 0) < WATER_NEEDED_FOR_FLOWER){
-    console.log(`水桶不足 ${WATER_NEEDED_FOR_FLOWER} ml 才能澆花`);
-    return;
-  }
-  state.meta.bucketAmount -= WATER_NEEDED_FOR_FLOWER;
-  state.meta.flowerGarden.push({ date: todayKey(), timestamp: Date.now() });
-  saveState();
-  render();
-  console.log('澆花成功，花園新增一朵花 🌸');
+function onWaterFlowerAction(){
+  if(state.meta.bucketAmount < WATER_FOR_FLOWER){ alert('水桶水量不足，無法澆花'); return; }
+  state.meta.bucketAmount -= WATER_FOR_FLOWER;
+  state.meta.flowerGarden.push({ date: isoDate(), ts: Date.now() });
+  saveState();
+  renderMain();
+  // brief toast
+  toast('澆花成功！🌸');
 }
 
-/* ---------- achievement / level ---------- */
 function onAchieveToday(){
-  const yesterday = isoDate(new Date(Date.now() - MILLI_PER_DAY));
-  const yesterdayReached = getTotalFor(yesterday) >= state.settings.goal;
-
-  if (yesterdayReached && state.meta.lastAchieved === yesterday){ state.meta.streak = (state.meta.streak || 0) + 1; } 
-  else { state.meta.streak = yesterdayReached ? (state.meta.streak || 0) + 1 : 1; }
-  state.meta.lastAchieved = todayKey();
-  updateBottleLevel();
-  saveState();
-  showNotification('今日目標達成 🎉', `已達成今日目標 ${state.settings.goal} ml`);
-  playBadgeUnlock();
-  console.log('今日達標！徽章已解鎖（可領取）');
+  const yesterday = isoDate(new Date(Date.now() - MILLI_PER_DAY));
+  const yesterdayReached = getTotalFor(yesterday) >= state.settings.goal;
+  if(yesterdayReached && state.meta.lastAchieved === yesterday){
+    state.meta.streak = (state.meta.streak || 0) + 1;
+  } else {
+    state.meta.streak = 1;
+  }
+  state.meta.lastAchieved = isoDate();
+  // XP policy: 每次達標 +1 XP
+  state.meta.xp = (state.meta.xp || 0) + 1;
+  updateBottleLevelFromXp();
+  // award badge
+  awardDailyBadge(isoDate());
+  saveState();
+  toast('今日目標達成！徽章可領取');
 }
 
-function updateBottleLevel(){
-  const s = state.meta.streak || 0;
-  let lvl = 1;
-  if (s >= 30) lvl = 5;
-  else if (s >= 14) lvl = 4;
-  else if (s >= 7) lvl = 3;
-  else if (s >= 3) lvl = 2;
-  state.meta.level = lvl;
-  const badge = `Lv${lvl}-streak-${s}`;
-  if (!state.meta.badges.includes(badge)) state.meta.badges.push(badge);
-  saveState();
-}
-
+/* ---------- badge / claim ---------- */
 function onClaimBadge(){
-  if (getTotalFor(todayKey()) < state.settings.goal) { console.log('尚未達成今日目標，無法領取徽章'); return; }
-  const badge = `achieve-${todayKey()}`;
-  if (!state.meta.badges.includes(badge)){
-    saveState();
-    console.log('徽章已領取並加入徽章牆');
-  } else { console.log('本日徽章已領取'); }
-  render();
+  const today = isoDate();
+  if(getTotalFor(today) < state.settings.goal){ alert('尚未達成今日目標，無法領取徽章'); return; }
+  const id = `claim-${today}`;
+  if(state.meta.badges.includes(id)){ alert('本日徽章已領取'); return; }
+  state.meta.badges.push(id);
+  saveState();
+  renderMain();
+  toast('徽章已領取，已加入徽章牆');
 }
 
-/* ---------- settings / export / reset ---------- */
+/* ---------- bottle name / confirm ---------- */
+function onConfirmBottleName(){
+  const v = bottleNameInput.value.trim();
+  state.meta.bottleName = v;
+  saveState();
+  toast(v ? `水瓶命名為「${v}」` : '已移除水瓶名稱');
+  renderMain();
+}
+
+/* ---------- settings ---------- */
 function onSaveSettings(){
-  if(!goalInput || !reminderMinutesInput || !unitSelect) return console.log('錯誤：找不到設定元素');
-  const g = parseInt(goalInput.value) || 2000;
-  const rm = parseInt(reminderMinutesInput.value) || 120;
-  state.settings.goal = Math.max(100, g);
-  state.settings.reminderMinutes = Math.max(10, rm);
-  state.settings.unit = unitSelect.value;
-  saveState();
-  startReminderTimerIfNeeded(true);
-  console.log('設定已儲存');
-  render();
+  const g = parseInt(goalInput.value) || 2000;
+  const rm = parseInt(reminderMinutesInput.value) || 120;
+  state.settings.goal = Math.max(100, g);
+  state.settings.reminderMinutes = Math.max(10, rm);
+  saveState();
+  startCountdown(true);
+  renderMain();
+  toast('設定已儲存');
 }
 
+/* ---------- reset / export ---------- */
 function onResetToday(){
-  if (!confirm('確認要重設今日喝水紀錄？此動作不可還原。')) return; // *保留 confirm*
-  state.meta.dailyIntakes[todayKey()] = [];
-  state.meta.lastIntake = null;
-  saveState();
-  render();
-  console.log('今日紀錄已重設');
+  if(!confirm('確認要重設今日喝水紀錄？此動作不可還原。')) return;
+  const key = isoDate();
+  state.meta.dailyIntakes[key] = [];
+  state.meta.lastIntake = null;
+  // Do not reset streak/xp unless full reset
+  saveState();
+  renderMain();
+  toast('今日紀錄已重設');
 }
-
 function onResetAll(){
-  if (!confirm('重設所有資料（含 streak、徽章、歷史、花園）？')) return; // *保留 confirm*
-  const token = prompt('輸入 "yes" 以確認重設'); // *保留 prompt*
-  if (token !== 'yes') return;
-  state = defaultState();
-  saveState();
-  location.reload();
+  if(!confirm('重設所有資料（含 streak、徽章、歷史、花園）？')) return;
+  const token = prompt('輸入 "yes" 以確認重設');
+  if(token !== 'yes'){ toast('已取消'); return; }
+  state = defaultState();
+  saveState();
+  location.reload();
 }
-
 function onExport(){
-  if(!exportBtn) return;
-  const dataStr = JSON.stringify(state, null, 2);
-  const blob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `waterhero_export_${isoDate()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  console.log('資料已匯出');
+  const dataStr = JSON.stringify(state, null, 2);
+  const blob = new Blob([dataStr], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `waterhero_export_${isoDate()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('資料已匯出');
 }
 
-function onBottleNameChange(){
-  if(!bottleNameInput) return;
-  state.meta.bottleName = bottleNameInput.value.trim();
-  saveState();
-  console.log('水瓶名稱已儲存');
-}
-
-function onUnitChange(){
-  if (unitSelect.value === 'cup') { unitLabel.textContent = '杯'; unitLabel2.textContent = '杯'; }
-  else { unitLabel.textContent = 'ml'; unitLabel2.textContent = 'ml'; }
-  state.settings.unit = unitSelect.value;
-  saveState();
-  render();
-}
-
-/* ---------- notifications / theme ---------- */
-function applyTheme(t){
-  if (t === 'dark') document.documentElement.classList.add('dark');
-  else document.documentElement.classList.remove('dark');
-  state.settings.theme = t;
-  saveState();
-}
-
-function onToggleTheme(){
-  const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-  applyTheme(next);
-  console.log(`主題更新為 ${next}`);
-}
-
-// 倒數計時功能 (新功能)
-function updateCountdown() {
-    if(!timerDisplayEl) return;
-    const nextTime = (state.meta.lastReminderTime || Date.now()) + (state.settings.reminderMinutes * 60 * 1000);
-    const remainingMs = nextTime - Date.now();
-
-    if (remainingMs <= 0) {
-        timerDisplayEl.textContent = '已超時';
-        return;
+/* ---------- notifications / reminders ---------- */
+let countdownInterval = null;
+function startCountdown(force=false){
+  if(countdownInterval && !force) return;
+  if(countdownInterval) clearInterval(countdownInterval);
+  const mins = parseInt(state.settings.reminderMinutes) || 120;
+  // base time is lastReminderTime; if not set use now
+  if(!state.meta.lastReminderTime) state.meta.lastReminderTime = Date.now();
+  const target = state.meta.lastReminderTime + (mins * 60 * 1000);
+  countdownInterval = setInterval(()=> {
+    const remaining = target - Date.now();
+    if(remaining <= 0){
+      timerDisplay.textContent = '已超時';
+      clearInterval(countdownInterval);
+      // try show notification
+      if('Notification' in window && Notification.permission === 'granted'){
+        new Notification('WaterHero 提醒', { body: '還沒達成今日喝水目標，喝一杯吧！' });
+      } else {
+        // fallback toast
+        toast('提醒：該喝水了！');
+      }
+      return;
     }
-
-    const totalSeconds = Math.floor(remainingMs / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    const pad = (num) => String(num).padStart(2, '0');
-
-    if (hours > 0) {
-        timerDisplayEl.textContent = `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
-    } else {
-        timerDisplayEl.textContent = `${pad(minutes)}:${pad(seconds)}`;
-    }
+    const sec = Math.floor(remaining/1000);
+    const h = Math.floor(sec/3600); const m = Math.floor((sec%3600)/60); const s = sec%60;
+    timerDisplay.textContent = (h>0 ? `${h}h ${m}m ${s}s` : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`);
+  }, 1000);
 }
-
-
-function startCountdown() {
-    if (countdownTimer) clearInterval(countdownTimer);
-    updateCountdown(); // 立即更新一次
-    countdownTimer = setInterval(updateCountdown, 1000);
-}
-
-
 async function onRequestNotify(){
-  if (!confirm('確認要啟用提醒嗎？提醒將在本分頁開啟時，每隔 ' + state.settings.reminderMinutes + ' 分鐘跳出通知。')) {
-        return;
-    }
-  if (!('Notification' in window)) { console.log('此瀏覽器不支援通知'); return; }
-  try {
-    const perm = await Notification.requestPermission();
-    if (perm === 'granted') { 
-        console.log('已取得通知權限（分頁開啟時生效）'); 
-        showNotification('提醒已啟用', 'WaterHero 提醒已啟用'); 
-        state.meta.lastReminderTime = Date.now(); // 啟用時重設時間
-        startCountdown(); // 啟動倒數
-    }
-    else console.log('未取得通知權限');
-  } catch(e){ console.warn(e); console.log('通知啟用失敗'); }
+  if(!confirm(`確認要啟用提醒嗎？提醒將在本分頁開啟時，每隔 ${state.settings.reminderMinutes} 分鐘顯示`)) return;
+  if(!('Notification' in window)){ alert('此瀏覽器不支援通知'); return; }
+  const perm = await Notification.requestPermission();
+  if(perm === 'granted'){
+    state.meta.lastReminderTime = Date.now();
+    saveState();
+    startCountdown(true);
+    toast('通知權限已允許，提醒已啟用');
+  } else {
+    alert('未允許通知');
+  }
 }
 
-function showNotification(title, body){
-  if (!('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
-  try {
-    const n = new Notification(title, { body: body, icon: null });
-    n.onclick = () => window.focus();
-  } catch(e) { console.warn('notification error', e); }
+/* ---------- small utilities ---------- */
+function toast(msg){
+  const container = document.getElementById('toast');
+  const div = document.createElement('div');
+  div.className = 'glass small px-3 py-2';
+  div.style.display = 'inline-block';
+  div.textContent = msg;
+  container.appendChild(div);
+  setTimeout(()=> div.remove(), 2200);
 }
 
-/* ---------- chart update trigger ---------- */
-function initChart(){
-  const cfg = {
-    type: 'bar',
-    data: { labels: [], datasets: [{ label: '每日總量 (ml)', data: [], borderRadius: 8, barThickness: 18 }]},
-    options: {
-      responsive: true,
-      scales: { x: { grid: { display: false } }, y: { beginAtZero: true } },
-      plugins: { legend: { display: false } }
-    }
-  };
-  if(weekChartCtx) weekChart = new Chart(weekChartCtx, cfg);
+/* ---------- event bindings ---------- */
+function bindEvents(){
+  addBtn.addEventListener('click', onAdd);
+  addInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') onAdd(); });
+  undoBtn.addEventListener('click', onUndo);
+  waterFlowerBtn.addEventListener('click', onWaterFlowerAction);
+  bottleConfirm.addEventListener('click', onConfirmBottleName);
+  claimBadgeBtn.addEventListener('click', onClaimBadge);
+  resetToday.addEventListener('click', onResetToday);
+  resetAll.addEventListener('click', onResetAll);
+  saveSettingsBtn.addEventListener('click', onSaveSettings);
+  exportBtn.addEventListener('click', onExport);
+  notifyBtn.addEventListener('click', onRequestNotify);
+  unitSelect.addEventListener('change', ()=>{ state.settings.unit = unitSelect.value; saveState(); });
 }
 
-function updateChart(){
-  if (!weekChart) return;
-  const labels = [], dataPoints = [];
-  for (let i=6;i>=0;i--){
-    const key = isoDate(new Date(Date.now() - i*MILLI_PER_DAY));
-    labels.push(key.slice(5));
-    dataPoints.push(getTotalFor(key));
-  }
-  weekChart.data.labels = labels;
-  weekChart.data.datasets[0].data = dataPoints;
-  weekChart.update();
-  renderHistoryList();
+/* ---------- initial sync ---------- */
+function hydrateDefaults(){
+  // push defaults to DOM inputs
+  goalInput.value = state.settings.goal;
+  reminderMinutesInput.value = state.settings.reminderMinutes;
+  unitSelect.value = state.settings.unit || 'ml';
 }
 
-function renderHistoryList(){
-  let html = '';
-  const allKeys = Object.keys(state.meta.dailyIntakes).sort().slice(-14).reverse();
-  if (allKeys.length === 0) html = '<div class="text-sm text-slate-500">尚無紀錄</div>';
-  else {
-    allKeys.forEach(k => {
-      const v = getTotalFor(k);
-      const intakes = getDailyIntakes(k).join(' + ');
-      html += `<div class="flex flex-col py-1 border-b border-slate-100 dark:border-slate-700">
-        <div class="flex justify-between font-semibold"><span>${k}</span><span>${v} ml</span></div>
-        <div class="text-xs text-slate-500 dark:text-slate-400">詳情: ${intakes} ml</div>
-      </div>`;
-    });
-  }
-  if(historyList) historyList.innerHTML = html;
-}
-
-function render(){
-  // 確保今日單筆記錄存在
-  if (!state.meta.dailyIntakes[todayKey()]) state.meta.dailyIntakes[todayKey()] = [];
-
-  // 核心 UI 更新
-  if(goalDisplay) goalDisplay.textContent = state.settings.goal;
-  const todayTotal = getTotalFor(todayKey());
-  if(todayTotalEl) todayTotalEl.textContent = Math.round(todayTotal);
-  const pct = Math.min(100, Math.round((todayTotal / state.settings.goal) * 100));
-  if(progressBar) progressBar.style.width = pct + '%';
-
-  // 遊戲化/徽章 UI 更新
-  if(bottleLevelEl) bottleLevelEl.textContent = `Lv.${(state.meta.level || 1)}`;
-  if(streakCountEl) streakCountEl.textContent = state.meta.streak || 0;
-  if(bottleNameInput) bottleNameInput.value = state.meta.bottleName || '';
-
-  // 水桶 UI
-  const maxCapacity = WATER_NEEDED_FOR_FLOWER * 2;
-  let levelPercentage = Math.min(((state.meta.bucketAmount || 0) / maxCapacity) * 100, 100);
-  if(waterLevelDisplay) waterLevelDisplay.style.height = `${levelPercentage}%`;
-
-  if (waterFlowerBtn) {
-    if ((state.meta.bucketAmount || 0) >= WATER_NEEDED_FOR_FLOWER){
-      waterFlowerBtn.disabled = false;
-      waterFlowerBtn.title = `點擊澆花 (${WATER_NEEDED_FOR_FLOWER} ml)`;
-    } else {
-      waterFlowerBtn.disabled = true;
-      const missing = WATER_NEEDED_FOR_FLOWER - (state.meta.bucketAmount || 0);
-      waterFlowerBtn.title = `還需要 ${missing} ml 才能澆花`;
-    }
-  }
-
-  renderGarden();
-  updateChart();
-  saveState();
-}
-
-function renderGarden(){
-  const garden = state.meta.flowerGarden || [];
-  if (!garden.length){
-    if(flowerGardenDisplay) flowerGardenDisplay.innerHTML = `<p id="gardenMessage">你的花園還空空的，快來澆水吧！</p>`;
-    return;
-  }
-  let html = '';
-  garden.forEach(()=> html += `<span class="flower-unit">${FINAL_FLOWER_ICON}</span>`);
-  if(flowerGardenDisplay) flowerGardenDisplay.innerHTML = html;
-}
-
-/* ---------- init ---------- */
+/* ---------- boot ---------- */
 window.onload = () => {
-  // 綁定核心事件
-  if (addBtn) addBtn.addEventListener('click', onAdd);
-  if (addInput) addInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') onAdd(); });
-  if (undoBtn) undoBtn.addEventListener('click', onUndo);
-  if (waterFlowerBtn) waterFlowerBtn.addEventListener('click', onWaterFlower);
-  
-  // 綁定設置與輔助事件
-  if (saveSettings) saveSettings.addEventListener('click', onSaveSettings);
-  if (resetTodayBtn) resetTodayBtn.addEventListener('click', onResetToday);
-  if (unitSelect) unitSelect.addEventListener('change', onUnitChange);
-  if (exportBtn) exportBtn.addEventListener('click', onExport);
-  if (bottleNameInput) bottleNameInput.addEventListener('change', onBottleNameChange);
-  if (claimBadgeBtn) claimBadgeBtn.addEventListener('click', onClaimBadge);
-  if (resetAllBtn) resetAllBtn.addEventListener('click', onResetAll);
-  
-  // 提醒功能 (修復點：直接在此處檢查並綁定)
-  if (notifyBtn) notifyBtn.addEventListener('click', onRequestNotify);
-
-  // 啟動依賴外部庫的功能
-  initChart();
-  initBadgeAnimation();
-  startCountdown(); // 啟動倒數計時
-  
-  // 首次渲染
-  render();
+  bindEvents();
+  hydrateDefaults();
+  renderMain();
+  startCountdown(); // start countdown if applicable
 };
+
 </script>
 </body>
 </html>
