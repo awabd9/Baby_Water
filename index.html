@@ -2,167 +2,223 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 <title>WaterHero v6.0 — 每日喝水紀錄（手機單頁優化版）</title>
 
+<!-- Tailwind -->
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  padding:0;
-  overflow-x:hidden;
-  background:linear-gradient(to bottom,#dbeafe,#f0fdf4);
-  font-family:system-ui, -apple-system, BlinkMacSystemFont;
-}
-.container{
-  max-width:480px;
-  margin:0 auto;
-  padding:1rem;
-}
-.section{
-  @apply bg-white rounded-2xl shadow p-4 mb-4;
-}
-.btn{
-  @apply bg-blue-500 text-white rounded-xl px-3 py-2 text-sm font-semibold active:scale-95;
-}
-input{
-  @apply border border-gray-300 rounded-xl px-2 py-1 text-center text-sm;
-}
+  :root { -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; }
+  html,body {
+    height:100%;
+    margin:0;
+    padding:0;
+    background: linear-gradient(180deg,#eef8ff,#ffffff);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow p-4 mb-4 w-full max-w-md mx-auto;
+  }
 </style>
 </head>
 
-<body>
-<div class="container">
+<body class="flex flex-col items-center justify-start p-2">
+  <!-- Header -->
+  <h1 class="text-2xl font-bold mt-2 mb-4 text-blue-700">💧 WaterHero v6.0</h1>
 
   <!-- 水瓶命名 -->
-  <div class="section text-center">
-    <h2 class="text-lg font-bold mb-2">💧 我的水瓶</h2>
-    <div class="flex justify-center items-center gap-2">
-      <input id="bottleName" type="text" placeholder="輸入水瓶名稱" class="w-36" />
-      <button id="confirmBottle" class="btn">確認</button>
+  <div class="card flex flex-col items-center">
+    <label class="text-sm mb-2 font-semibold">我的水瓶名稱</label>
+    <div class="flex w-full gap-2">
+      <input id="bottleName" class="flex-1 border rounded px-2 py-1 text-center" placeholder="輸入水瓶名稱" />
+      <button id="saveBottleName" class="bg-blue-500 text-white px-3 py-1 rounded">確定</button>
     </div>
-    <p id="bottleDisplay" class="mt-2 text-blue-700 font-semibold"></p>
+    <div id="bottleNameDisplay" class="mt-2 text-sm text-gray-600"></div>
   </div>
 
-  <!-- 喝水輸入 -->
-  <div class="section text-center">
-    <h2 class="text-lg font-bold mb-2">🥤 今日喝水量</h2>
-    <div class="flex justify-center items-center gap-2 mb-2">
-      <input id="addInput" type="number" placeholder="ml" class="w-24" />
-      <button id="addBtn" class="btn">加入</button>
-      <button id="undoBtn" class="btn bg-gray-500">撤回</button>
+  <!-- 今日喝水紀錄 -->
+  <div class="card text-center">
+    <p class="font-semibold mb-2">今日總量：<span id="todayTotal">0</span> ml</p>
+    <div class="flex justify-center gap-2 mb-2">
+      <input id="waterInput" type="number" class="w-24 border rounded text-center" placeholder="ml" />
+      <button id="addWater" class="bg-blue-600 text-white px-3 py-1 rounded">加入</button>
+      <button id="undoWater" class="bg-gray-400 text-white px-3 py-1 rounded">撤回</button>
     </div>
-    <p id="todayTotal" class="text-lg font-semibold text-blue-600">0 ml</p>
+    <div class="h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
+      <div id="progressBar" class="h-3 bg-blue-500 transition-all duration-300" style="width:0%"></div>
+    </div>
+    <p>目標：<span id="goalDisplay">2000</span> ml</p>
   </div>
 
-  <!-- 澆花花園 -->
-  <div class="section text-center">
-    <h2 class="text-lg font-bold mb-2">🌷 我的花園</h2>
-    <div id="flowerGarden" class="flex flex-wrap justify-center gap-2 min-h-[60px]"></div>
-    <button id="waterFlowerBtn" class="btn mt-3">澆花 (需1000ml)</button>
+  <!-- 花園 -->
+  <div class="card">
+    <p class="font-semibold mb-2">🌼 我的花園</p>
+    <div id="garden" class="flex flex-wrap gap-2 justify-center text-2xl"></div>
   </div>
 
-  <!-- 提醒與目標設定 -->
-  <div class="section text-center">
-    <h2 class="text-lg font-bold mb-2">⏰ 提醒與目標</h2>
-    <div class="flex flex-wrap justify-center gap-3">
-      <div class="flex items-center gap-1">
-        <label class="text-sm">提醒(分)</label>
-        <input id="reminderMins" type="number" placeholder="60" class="w-24" />
-      </div>
-      <button id="startReminder" class="btn">開始倒數</button>
-      <div id="timerDisplay" class="font-semibold text-blue-600">--:--:--</div>
+  <!-- 提醒設定與目標 -->
+  <div class="card flex flex-wrap items-center justify-center gap-2">
+    <div class="flex items-center gap-1">
+      <label class="text-sm">提醒(分):</label>
+      <input id="reminderInput" type="number" class="w-24 border rounded px-2 py-1 text-center" placeholder="60" />
+      <button id="setReminder" class="bg-green-500 text-white px-3 py-1 rounded">設定</button>
     </div>
 
-    <div class="flex justify-center items-center gap-2 mt-4">
-      <label class="text-sm">每日目標(ml)</label>
-      <input id="dailyGoal" type="number" placeholder="2000" class="w-16" />
+    <div class="flex items-center gap-1">
+      <label class="text-sm">目標(ml):</label>
+      <input id="goalInput" type="number" class="w-16 border rounded px-2 py-1 text-center" placeholder="2000" />
+      <button id="setGoal" class="bg-yellow-500 text-white px-3 py-1 rounded">確認</button>
+    </div>
+
+    <div class="w-full text-center mt-2 text-sm text-gray-600">
+      倒數：<span id="timerDisplay">--:--</span>
     </div>
   </div>
 
   <!-- 徽章與等級 -->
-  <div class="section text-center">
-    <h2 class="text-lg font-bold mb-2">🏅 成就</h2>
-    <p id="badgeDisplay" class="text-yellow-600 font-semibold mb-1">尚未達標</p>
-    <p id="levelDisplay" class="text-green-600 font-semibold">等級 Lv.1</p>
+  <div class="card text-center">
+    <p>🏅 今日達標徽章：<span id="badgeCount">0</span></p>
+    <p>🔥 連續達標：<span id="streak">0</span> 天</p>
+    <p>🧴 水瓶等級：Lv.<span id="bottleLevel">1</span></p>
   </div>
 
-  <!-- 今日分布圖 -->
-  <div class="section text-center">
-    <h2 class="text-lg font-bold mb-2">📊 今日喝水分布</h2>
-    <canvas id="todayChart" height="200"></canvas>
+  <!-- Chart -->
+  <div class="card">
+    <p class="font-semibold mb-2">📊 今日喝水分布</p>
+    <canvas id="dailyChart" height="150"></canvas>
   </div>
 
-  <!-- 控制區 -->
-  <div class="section text-center">
-    <h2 class="text-lg font-bold mb-2">⚙️ 控制</h2>
-    <div class="flex flex-wrap justify-center gap-2">
-      <button id="resetToday" class="btn bg-red-500">重設今日</button>
-      <button id="resetAll" class="btn bg-red-700">重設全部</button>
-    </div>
+  <!-- 控制 -->
+  <div class="card flex flex-wrap items-center justify-center gap-2">
+    <button id="resetToday" class="bg-red-400 text-white px-3 py-1 rounded">重設今天</button>
+    <button id="resetAll" class="bg-red-600 text-white px-3 py-1 rounded">重設全部</button>
   </div>
-
-</div>
 
 <script>
-let total = 0, goal = 2000, flowers = 0, last = 0, level = 1, xp = 0, badges = 0;
-const garden = document.getElementById('flowerGarden');
-const totalEl = document.getElementById('todayTotal');
-const badgeEl = document.getElementById('badgeDisplay');
-const levelEl = document.getElementById('levelDisplay');
-const goalInput = document.getElementById('dailyGoal');
-const reminderInput = document.getElementById('reminderMins');
-const timerEl = document.getElementById('timerDisplay');
-let timer = null, secs = 0;
-let chart, chartData = [];
+let todayTotal = 0, goal = 2000, waterHistory = [], flowers = 0, badgeCount = 0, streak = 0, level = 1;
+let lastInput = 0, reminderTimer = null, reminderSeconds = 0;
+const garden = document.getElementById('garden');
+const todayTotalEl = document.getElementById('todayTotal');
+const progressBar = document.getElementById('progressBar');
+const goalDisplay = document.getElementById('goalDisplay');
+const badgeEl = document.getElementById('badgeCount');
+const streakEl = document.getElementById('streak');
+const levelEl = document.getElementById('bottleLevel');
+const timerDisplay = document.getElementById('timerDisplay');
 
-function render() {
-  totalEl.textContent = total + ' ml';
-  badgeEl.textContent = (total >= goal) ? '🎖️ 今日達標！' : '尚未達標';
-  levelEl.textContent = '等級 Lv.' + level;
-}
-function addWater(v) {
-  total += v; last = v;
-  chartData.push({t:new Date().toLocaleTimeString(),v});
-  if(total >= goal){xp++; if(xp>=3){level++;xp=0;}}
-  if(total >= 1000){flowers++; garden.innerHTML += '🌸'; total -= 1000;}
-  render(); updateChart();
-}
-function undo(){ if(last>0){ total -= last; last=0; render(); updateChart();}}
-function resetToday(){ if(confirm('重設今日紀錄？')){total=0;chartData=[];render();updateChart();}}
-function resetAll(){
-  let ok=prompt('輸入 yes 以重設全部資料');
-  if(ok==='yes'){localStorage.clear();location.reload();}
-}
-function startReminder(){
-  if(timer) clearInterval(timer);
-  secs = Number(reminderInput.value)*60;
-  timer = setInterval(()=>{
-    if(secs<=0){clearInterval(timer);alert('喝水時間到！');timerEl.textContent='--:--:--';return;}
-    secs--;
-    const m=Math.floor(secs/60), s=secs%60;
-    timerEl.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+// 加水
+document.getElementById('addWater').onclick = () => {
+  const val = Number(document.getElementById('waterInput').value);
+  if(!val || val<=0) return alert('請輸入正確的數字');
+  lastInput = val;
+  todayTotal += val;
+  waterHistory.push({time: new Date().toLocaleTimeString(), value: val});
+  updateUI();
+  document.getElementById('waterInput').value='';
+};
+
+// 撤回
+document.getElementById('undoWater').onclick = ()=>{
+  if(lastInput===0) return alert('沒有可撤回的紀錄');
+  todayTotal -= lastInput;
+  if(todayTotal<0) todayTotal=0;
+  lastInput=0;
+  updateUI();
+};
+
+// 設定提醒
+document.getElementById('setReminder').onclick = ()=>{
+  const mins = Number(document.getElementById('reminderInput').value);
+  if(!mins || mins<=0) return alert('請輸入分鐘數');
+  if(reminderTimer) clearInterval(reminderTimer);
+  reminderSeconds = mins*60;
+  reminderTimer = setInterval(()=>{
+    if(reminderSeconds<=0){
+      clearInterval(reminderTimer);
+      alert('⏰ 喝水時間到！');
+    } else {
+      reminderSeconds--;
+      const m = String(Math.floor(reminderSeconds/60)).padStart(2,'0');
+      const s = String(reminderSeconds%60).padStart(2,'0');
+      timerDisplay.textContent=`${m}:${s}`;
+    }
   },1000);
-}
-function updateChart(){
-  const ctx=document.getElementById('todayChart');
-  const labels=chartData.map(i=>i.t);
-  const data=chartData.map(i=>i.v);
-  if(chart) chart.destroy();
-  chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'喝水(ml)',data}]},options:{responsive:true,maintainAspectRatio:false}});
+};
+
+// 設定目標
+document.getElementById('setGoal').onclick = ()=>{
+  const val = Number(document.getElementById('goalInput').value);
+  if(!val || val<=0) return alert('請輸入有效目標');
+  goal = val;
+  goalDisplay.textContent=goal;
+  updateUI();
+};
+
+// 重設今天
+document.getElementById('resetToday').onclick = ()=>{
+  if(confirm('確定重設今天資料？')){
+    todayTotal=0; lastInput=0; waterHistory=[]; updateUI();
+  }
+};
+
+// 重設全部
+document.getElementById('resetAll').onclick = ()=>{
+  const c = prompt('輸入 yes 以確認重設所有資料');
+  if(c==='yes'){ location.reload(); localStorage.clear(); }
+};
+
+// 儲存水瓶名稱
+document.getElementById('saveBottleName').onclick = ()=>{
+  const name = document.getElementById('bottleName').value.trim();
+  if(!name) return alert('請輸入名稱');
+  localStorage.setItem('bottleName', name);
+  document.getElementById('bottleNameDisplay').textContent = `水瓶名稱：${name}`;
+};
+
+// 更新畫面
+function updateUI(){
+  todayTotalEl.textContent=todayTotal;
+  const percent=Math.min(100,(todayTotal/goal)*100);
+  progressBar.style.width=percent+'%';
+  if(todayTotal>=1000 && todayTotal%1000<lastInput){ // 累積1000ml澆花
+    flowers++;
+    const flowerEl=document.createElement('span');
+    flowerEl.textContent='🌸';
+    garden.appendChild(flowerEl);
+  }
+  if(todayTotal>=goal){
+    badgeCount=1; streak++; level++;
+  }
+  badgeEl.textContent=badgeCount;
+  streakEl.textContent=streak;
+  levelEl.textContent=level;
+  updateChart();
 }
 
-document.getElementById('addBtn').onclick=()=>{const v=Number(document.getElementById('addInput').value);if(v>0)addWater(v);}
-document.getElementById('undoBtn').onclick=undo;
-document.getElementById('waterFlowerBtn').onclick=()=>{if(total>=1000){flowers++;garden.innerHTML+='🌸';total-=1000;render();}};
-document.getElementById('resetToday').onclick=resetToday;
-document.getElementById('resetAll').onclick=resetAll;
-document.getElementById('startReminder').onclick=startReminder;
-document.getElementById('confirmBottle').onclick=()=>{const n=document.getElementById('bottleName').value;document.getElementById('bottleDisplay').textContent='🏺 '+n;localStorage.setItem('bottle',n);}
-window.onload=()=>{const n=localStorage.getItem('bottle');if(n)document.getElementById('bottleDisplay').textContent='🏺 '+n;render();updateChart();}
+// Chart.js 喝水分布圖
+const ctx=document.getElementById('dailyChart');
+let chart=new Chart(ctx,{
+  type:'bar',
+  data:{labels:[],datasets:[{label:'喝水量(ml)',data:[],backgroundColor:'#3b82f6'}]},
+  options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}
+});
+
+function updateChart(){
+  chart.data.labels = waterHistory.map(i=>i.time);
+  chart.data.datasets[0].data = waterHistory.map(i=>i.value);
+  chart.update();
+}
+
+// 初始化
+const savedName = localStorage.getItem('bottleName');
+if(savedName) document.getElementById('bottleNameDisplay').textContent = `水瓶名稱：${savedName}`;
+updateUI();
 </script>
 </body>
 </html>
