@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>WaterHero v5.5 — 每日喝水紀錄（最終穩定版）</title>
+<title>WaterHero v5.6 — 每日喝水紀錄（最終穩定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -67,12 +67,10 @@
         width: 100%;
         margin-top: 0.5rem; /* mt-2 */
     }
-    /* 關鍵修復：移除 flex: 1 1 50% 等屬性，讓按鈕自動收縮 */
     .btn-row button {
-        padding-left: 0.75rem; 
-        padding-right: 0.75rem;
-        flex-grow: 1; /* 允許按鈕佔滿剩餘寬度 */
-        flex-basis: 0; /* 確保起始寬度為零 */
+        flex: 1 1 50%; /* 讓按鈕平均分配空間 */
+        min-width: 0;
+        font-size: 1rem; /* 鎖定字體大小 */
     }
 </style>
 </head>
@@ -83,7 +81,7 @@
 <div class="max-w-3xl mx-auto p-4"> 
   <header class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v5.5 💧</h1>
+      <h1 class="text-2xl font-semibold">WaterHero v5.6 💧</h1>
     </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
@@ -125,8 +123,8 @@
           </div>
 
           <div class="btn-row"> 
-            <button id="addBtn" class="bg-sky-600 text-white py-3 rounded-lg active:scale-95">加入</button> 
-            <button id="undoBtn" class="bg-red-500 text-white py-3 rounded-lg active:scale-95" title="撤銷上一筆記錄">撤銷 ↶</button>
+            <button id="addBtn" class="bg-sky-600 text-white py-3 px-4 rounded-lg active:scale-95">加入</button> 
+            <button id="undoBtn" class="bg-red-500 text-white py-3 px-4 rounded-lg active:scale-95" title="撤銷上一筆記錄">撤銷 ↶</button>
           </div>
         </div>
     </section>
