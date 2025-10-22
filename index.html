@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v2.9 — 每日喝水紀錄（佈局終極修正版）</title>
+<title>WaterHero v2.9 — 每日喝水紀錄（最終穩定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lottie-web@5.10.1/build/player/lottie.min.js"></script>
 
 <style>
-    /* 全局 CSS 重置：強制使用 Border-Box 模型以解決溢出問題 */
+    /* 全局 CSS 重置 */
     *,
     *::before,
     *::after {
@@ -21,6 +21,9 @@
         margin: 0;
         padding: 0;
         overflow-x: hidden !important; 
+        display: flex;
+        justify-content: center; /* 讓主容器強制置中 */
+        min-height: 100vh;
     }
     
   .glass { backdrop-filter: blur(6px); background: rgba(255,255,255,0.65); }
@@ -59,12 +62,11 @@
         font-size:14px; 
     }
     /* 核心容器寬度與置中控制 */
-    .app-container { /* 替換了原來的 max-w-3xl mx-auto p-6 */
+    .app-container { 
         width: 100%; 
-        max-width: 1024px; /* 桌面最大寬度 */
-        margin: 0 auto; /* 置中 */
-        padding: 1rem; /* 手機基礎邊距 */
+        max-width: 1024px;
         box-sizing: border-box;
+        padding: 1rem; /* 手機基礎邊距 */
     }
     @media (min-width: 768px) {
         .app-container {
@@ -80,7 +82,7 @@
 <div class="app-container">
   <header class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v2.9 💧</h1>
+      <h1 class="text-2xl font-semibold">WaterHero v2.7 💧</h1>
     </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
