@@ -3,41 +3,34 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>WaterHero 4.1 — 每日喝水紀錄（最終穩定版）</title>
+<title>WaterHero 4.2 — 每日喝水紀錄（佈局最終穩定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lottie-web@5.10.1/build/player/lottie.min.js"></script>
 
 <style>
-  /* 採納 GPT 的手機友好 CSS 鎖定 */
-  * {
-    box-sizing: border-box;
-  }
-  html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    overflow-x: hidden; /* 強制消除橫向捲動 */
-    /* 保持 WaterHero 原有風格的背景漸變 */
-    background-image: linear-gradient(to bottom, #eff6ff, #ffffff);
-  }
-  .dark body {
-    background-image: linear-gradient(to bottom, #0f172a, #1e293b);
-  }
-  canvas {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-  .glass {
-    backdrop-filter: blur(8px);
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 1rem;
-  }
-  .dark .glass {
-    background: rgba(17,24,39,0.7);
-  }
+    /* 全局 CSS 重置 */
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+    /* 核心佈局鎖定：確保 BODY 無邊界、無溢出，並強制置中 */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden !important; 
+        display: flex;
+        justify-content: center; /* 讓主容器強制置中 */
+        min-height: 100vh;
+        width: 100%;
+    }
+    
+  .glass { backdrop-filter: blur(6px); background: rgba(255,255,255,0.65); }
+  .dark .glass { background: rgba(17,24,39,0.55); }
   .badge-anim { width: 92px; height: 92px; }
+  .progress-wave { background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0)); }
 
   /* 遊戲化區塊 */
   .water-bucket-wrapper { position: relative; width: 80px; height: 150px; border-radius: 5px 5px 20px 20px; overflow: hidden; }
@@ -47,156 +40,182 @@
   .dark .flower-garden { background:#1a202c; border-color:#4a5568; }
   .flower-unit { font-size:2em; margin:3px; cursor:default; line-height:1; }
   #gardenMessage { font-size:0.9em; color:#999; padding-top:50px; text-align:center; width:100%; }
-
-    /* 關鍵修復：確保主容器置中並在手機上不推擠 */
-    .app-main-container {
-        width: 100%;
+  /* Toast */
+  #toast { 
+        position: fixed; 
+        right: 20px; 
+        bottom: 24px; 
+        z-index: 9999; 
+        display:flex; 
+        flex-direction:column; 
+        gap:8px; 
+        max-width: 90%; 
+        top: auto; 
+        left: auto;
+    }
+  .toast-item { 
+        background: rgba(0,0,0,0.8); 
+        color: #fff; 
+        padding:10px 14px; 
+        border-radius:8px; 
+        min-width:160px; 
+        box-shadow: 0 6px 18px rgba(0,0,0,0.2); 
+        font-size:14px; 
+    }
+    /* 核心容器寬度與置中控制 */
+    .app-container { 
+        width: 100%; 
         max-width: 1024px;
-        margin: 0 auto; /* 置中 */
-        padding: 1rem; /* 基礎內邊距 */
         box-sizing: border-box;
+        padding: 1rem; /* 手機基礎邊距 */
+    }
+    @media (min-width: 768px) {
+        .app-container {
+            padding: 1.5rem; /* 桌面邊距恢復 */
+        }
     }
 </style>
 </head>
-
-<body class="flex flex-col items-center min-h-screen text-slate-800 dark:text-slate-100"> 
+<body class="bg-gradient-to-b from-sky-50 to-white dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 min-h-screen">
 
 <div id="toast"></div>
 
-<div class="app-main-container">
-  <header class="w-full max-w-md mx-auto text-center mb-4 flex justify-between items-center">
-    <div class="text-left">
-      <h1 class="text-2xl font-semibold text-blue-600 dark:text-sky-400">WaterHero v4.1 💧</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-300">每日喝水紀錄（手機優先版）</p>
+<div class="app-container">
+  <header class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold">WaterHero v4.2 💧</h1>
     </div>
-    <div class="flex items-center gap-2">
-      <button id="notifyBtn" class="px-3 py-2 rounded-lg glass text-sm active:scale-95">提醒</button>
+    <div class="flex items-center gap-3">
+      <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
     </div>
   </header>
 
-  <main class="w-full max-w-md mx-auto flex flex-col gap-4">
+  <main class="grid gap-4 md:grid-cols-2">
+    <form id="addForm" onsubmit="event.preventDefault();" novalidate class="md:col-span-2"> 
+    <section class="p-4 rounded-2xl glass shadow">
+        <div class="flex justify-between items-center mb-3">
+          <div>
+            <div class="text-sm text-slate-500 dark:text-slate-300">今日目標</div>
+            <div class="text-xl font-bold"><span id="goalDisplay">2000</span> <span id="unitLabel">ml</span></div>
+          </div>
+          <div class="text-right">
+            <div class="text-sm text-slate-500 dark:text-slate-300">已喝</div>
+            <div class="text-xl font-bold"><span id="todayTotal">0</span> <span id="unitLabel2">ml</span></div>
+          </div>
+        </div>
 
-    <form id="addForm" onsubmit="event.preventDefault();" novalidate> 
-    <section class="p-4 glass shadow flex flex-col gap-3">
-        <div class="flex justify-between items-center">
-          <div class="text-left">
-            <div class="text-sm text-slate-500 dark:text-slate-300">今日目標</div>
-            <div class="text-xl font-bold"><span id="goalDisplay">2000</span> <span id="unitLabel">ml</span></div>
-          </div>
-          <div class="text-right">
-            <div class="text-sm text-slate-500 dark:text-slate-300">已喝</div>
-            <div class="text-xl font-bold"><span id="todayTotal">0</span> <span id="unitLabel2">ml</span></div>
+      <div class="w-full text-center text-sm mb-3">
+          <p class="font-medium text-slate-600 dark:text-slate-300">下次提醒倒數:</p>
+          <div id="timerDisplay" class="text-lg font-bold text-sky-500">
+              --:--:--
+          </div>
+      </div>
+      
+        <div class="w-full h-4 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden mb-3">
+          <div id="progressBar" class="h-full bg-sky-400 dark:bg-sky-500 text-right progress-wave" style="width:0%"></div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <input id="addInput" type="number" placeholder="輸入喝水量 (例如 250)" class="flex-1 p-3 rounded-lg border border-slate-200 dark:bg-slate-800">
+          <div class="flex items-center gap-2 whitespace-nowrap">
+            <select id="unitSelect" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <option value="ml">ml</option>
+              <option value="cup">杯 (250ml)</option>
+            </select>
+            <button id="addBtn" class="px-4 py-3 rounded-lg bg-sky-600 text-white">加入</button>
+            <button id="undoBtn" class="px-3 py-3 rounded-lg bg-red-500 text-white" title="撤銷上一筆記錄">↶</button>
+          </div>
+        </div>
+    </section>
+    </form>
+
+        <section class="p-4 rounded-2xl glass shadow">
+      <h3 class="font-semibold text-lg mb-3 text-center">💧 澆花挑戰：累積與成長</h3>
+      <div class="flex justify-around items-end h-48">
+        <div class="water-bucket-wrapper">
+          <div id="waterLevel" class="water-level"></div>
+          <div class="bucket-outline"></div>
         </div>
-        </div>
 
-        <div class="w-full text-center text-sm">
-            <p class="font-medium text-slate-600 dark:text-slate-300">下次提醒倒數:</p>
-            <div id="timerDisplay" class="text-lg font-bold text-sky-500">
-                --:--:--
-            </div>
-        </div>
-      
-      <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-4 overflow-hidden">
-        <div id="progressBar" class="bg-sky-500 h-4 rounded-full" style="width:0%;"></div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <input id="addInput" type="number" placeholder="輸入喝水量" class="flex-1 border rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800">
-        <select id="unitSelect" class="border rounded-lg p-2.5 bg-white dark:bg-slate-800">
-          <option value="ml">ml</option>
-          <option value="cup">杯</option>
-        </select>
-        <button id="addBtn" class="bg-blue-600 text-white px-3 py-2.5 rounded-lg active:scale-95">加入</button>
-        <button id="undoBtn" class="bg-red-500 text-white px-3 py-2.5 rounded-lg active:scale-95" title="撤銷上一筆記錄">↶</button>
-      </div>
-  </section>
-  </form>
-
-    <section class="p-4 glass shadow w-full max-w-md mx-auto">
-    <h3 class="font-semibold text-lg mb-3 text-center">💧 澆花挑戰：累積與成長</h3>
-    <div class="flex justify-around items-end h-48">
-      <div class="water-bucket-wrapper">
-        <div id="waterLevel" class="water-level"></div>
-        <div class="bucket-outline"></div>
-      </div>
-
-      <div class="w-2/3 flex flex-col items-center justify-end h-full">
-        <div id="flowerGarden" class="flower-garden"></div>
-        <button id="waterFlowerBtn" disabled class="w-full px-4 py-2 rounded-lg bg-green-600 text-white disabled:bg-slate-400 disabled:cursor-not-allowed mt-2" title="累積 1000ml 水可澆花">
-          💧 澆花 (1000ml)
-        </button>
-      </div>
-    </div>
-  </section>
-
-    <section class="p-4 glass shadow flex flex-col gap-3 w-full max-w-md mx-auto">
-    <h3 class="font-semibold text-lg text-center">🏆 徽章與等級</h3>
-    <div class="flex items-center justify-between">
-      <div>
-        <div class="text-sm text-slate-500 dark:text-slate-300">水瓶名稱</div>
-        <input id="bottleName" class="p-2 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="為你的水瓶命名">
-      </div>
-      <div class="text-right">
-        <div class="text-sm text-slate-500 dark:text-slate-300">等級</div>
-        <div class="text-lg font-bold" id="bottleLevel">Lv.1</div>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-6">
-      <div id="badgeContainer" class="badge-anim"></div>
-      <div>
-        <div class="text-sm text-slate-500 dark:text-slate-300">連續達標 (streak)</div>
-        <div class="text-2xl font-bold" id="streakCount">0</div>
-        <div class="text-sm text-slate-500 dark:text-slate-300 mt-1" id="streakHint">連續達成每日目標可提升等級並解鎖徽章</div>
-      </div>
-    </div>
-
-    <div class="flex gap-2 justify-center">
-      <button id="claimBadge" class="px-4 py-2 rounded-lg bg-indigo-600 text-white">領取徽章（達成時可點）</button>
-      <button id="resetAll" class="px-4 py-2 rounded-lg bg-red-600 text-white">重設所有資料</button>
-    </div>
-  </section>
-
-    <section class="p-4 glass shadow w-full max-w-md mx-auto">
-    <h3 class="font-semibold text-lg mb-4">過去 7 天紀錄</h3>
-    <div class="w-full overflow-hidden">
-      <canvas id="waterChart" class="w-full"></canvas>
-    </div>
-    <div id="historyList" class="mt-3 text-sm text-slate-700 dark:text-slate-300"></div>
-  </section>
-
-    <section class="p-4 glass shadow flex flex-col gap-3 w-full max-w-md mx-auto">
-    <h3 class="font-semibold text-lg">系統設定與操作</h3>
-    <div class="flex items-center justify-between">
-      <div>
-        <div class="text-sm text-slate-500 dark:text-slate-300">每日目標 (ml)</div>
-        <input id="goalInput" type="number" min="100" class="p-2 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" value="2000">
-      </div>
-      <div class="text-right">
-        <div class="text-sm text-slate-500 dark:text-slate-300">提醒間隔</div>
-        <div class="flex gap-2 mt-1">
-          <input id="reminderMinutes" type="number" min="10" value="120" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 w-24">
-          <div class="self-center text-sm">分鐘</div>
+        <div class="w-2/3 flex flex-col items-center justify-end h-full">
+          <div id="flowerGarden" class="flower-garden"></div>
+          <button id="waterFlowerBtn" disabled class="w-full px-4 py-2 rounded-lg bg-green-600 text-white disabled:bg-slate-400 disabled:cursor-not-allowed mt-2" title="累積 1000ml 水可澆花">
+            💧 澆花 (1000ml)
+          </button>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="flex gap-2">
-      <button id="saveSettings" class="px-4 py-2 rounded-lg bg-green-600 text-white">儲存設定</button>
-      <button id="resetToday" class="px-4 py-2 rounded-lg bg-amber-500 text-white">重設今日</button>
-      <button id="exportBtn" class="px-4 py-2 rounded-lg bg-slate-600 text-white">匯出資料</button>
-    </div>
-    <div class="text-sm text-slate-500 dark:text-slate-300">說明：資料存於本機，不會上傳。</div>
-  </section>
+        <section class="p-4 rounded-2xl glass shadow grid gap-3">
+      <h3 class="font-semibold text-lg text-center">🏆 徽章與等級</h3>
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm text-slate-500 dark:text-slate-300">水瓶名稱</div>
+          <input id="bottleName" class="p-2 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="為你的水瓶命名">
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-slate-500 dark:text-slate-300">等級</div>
+          <div class="text-lg font-bold" id="bottleLevel">Lv.1</div>
+        </div>
+      </div>
 
-</main>
+      <div class="flex items-center gap-6">
+        <div id="badgeContainer" class="badge-anim"></div>
+        <div>
+          <div class="text-sm text-slate-500 dark:text-slate-300">連續達標 (streak)</div>
+          <div class="text-2xl font-bold" id="streakCount">0</div>
+          <div class="text-sm text-slate-500 dark:text-slate-300 mt-1" id="streakHint">連續達成每日目標可提升等級並解鎖徽章</div>
+        </div>
+      </div>
 
-<footer class="text-xs text-gray-400 mt-4 mb-2">© 2025 WaterHero - 穩定版</footer>
+      <div class="flex gap-2">
+        <button id="claimBadge" class="px-4 py-2 rounded-lg bg-indigo-600 text-white">領取徽章（達成時可點）</button>
+        <button id="resetAll" class="px-4 py-2 rounded-lg bg-red-600 text-white">重設所有資料</button>
+      </div>
+    </section>
 
+        <section class="p-4 rounded-2xl glass shadow md:col-span-2">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold">過去 7 天紀錄</h3>
+        <div class="text-sm text-slate-500 dark:text-slate-300">查看趨勢以作為行為調整依據</div>
+      </div>
+      <canvas id="weekChart" height="140"></canvas>
+      <div id="historyList" class="mt-3 text-sm text-slate-700 dark:text-slate-300"></div>
+    </section>
+
+        <section class="p-4 rounded-2xl glass shadow md:col-span-2">
+      <h3 class="font-semibold text-lg">系統設定與操作</h3>
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm text-slate-500 dark:text-slate-300">每日目標 (ml)</div>
+          <input id="goalInput" type="number" min="100" class="p-2 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800" value="2000">
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-slate-500 dark:text-slate-300">提醒間隔</div>
+          <div class="flex gap-2 mt-1">
+            <input id="reminderMinutes" type="number" min="10" value="120" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 w-24">
+            <div class="self-center text-sm">分鐘</div>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button id="saveSettings" class="px-4 py-2 rounded-lg bg-green-600 text-white">儲存設定</button>
+        <button id="resetToday" class="px-4 py-2 rounded-lg bg-amber-500 text-white">重設今日</button>
+        <button id="exportBtn" class="px-4 py-2 rounded-lg bg-slate-600 text-white">匯出資料</button>
+      </div>
+      <div class="text-sm text-slate-500 dark:text-slate-300">說明：提醒需允許瀏覽器通知；資料存於本機，不會上傳。</div>
+    </section>
+
+    <footer class="text-xs text-slate-500 dark:text-slate-400 mt-4 md:col-span-2">
+      說明：本系統以「最低阻力紀錄」為原則；提醒在分頁開啟狀態下有效；若需離線背景推播，建議升級為 PWA 或串接伺服器 Push。
+    </footer>
+  </main>
+</div>
 
 <script>
 /*
-  WaterHero v3.0 - 最終穩定版 (手機優先佈局)
+  WaterHero v2.4 - 最終穩定版
+  修正重點：移除所有 showToast 呼叫，確保靜默運行。
 */
 
 const LS_KEY = 'waterhero_v1';
@@ -207,6 +226,7 @@ const FINAL_FLOWER_ICON = "🌸";
 /* ---------- Helpers ---------- */
 function isoDate(d = new Date()){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().split('T')[0]; }
 function showToast(msg, timeout = 3000){ console.log("TOAST:", msg); } // 訊息導向 Console
+
 
 /* ---------- state + persistence ---------- */
 function defaultState(){
@@ -269,7 +289,7 @@ const unitLabel2 = document.getElementById('unitLabel2');
 const goalInput = document.getElementById('goalInput');
 const saveSettings = document.getElementById('saveSettings');
 const resetTodayBtn = document.getElementById('resetToday');
-const weekChartCtx = document.getElementById('waterChart'); // 注意：ID 改為 waterChart
+const weekChartCtx = document.getElementById('weekChart');
 const historyList = document.getElementById('historyList');
 const exportBtn = document.getElementById('exportBtn');
 const bottleNameInput = document.getElementById('bottleName');
