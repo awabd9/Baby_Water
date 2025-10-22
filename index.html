@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>WaterHero v4.5 — 每日喝水紀錄（佈局最終穩定版）</title>
+<title>WaterHero v4.6 — 每日喝水紀錄（最終穩定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -11,7 +11,9 @@
 
 <style>
     /* 全局 CSS 重置 */
-    * {
+    *,
+    *::before,
+    *::after {
         box-sizing: border-box;
     }
     /* 核心佈局鎖定：確保 BODY 無邊界、無溢出，並強制置中 */
@@ -65,22 +67,17 @@
         width: 100%; 
         max-width: 1024px;
         box-sizing: border-box;
-        padding: 1rem; /* 手機基礎邊距 */
+        padding: 0.5rem; /* 手機基礎邊距縮小到 8px */
     }
     @media (min-width: 768px) {
         .app-container {
             padding: 1.5rem; /* 桌面邊距恢復 */
         }
     }
-    /* 確保按鈕在手機上可以正確堆疊 */
-    .btn-row {
-        display: flex;
-        gap: 0.5rem; /* gap-2 */
-        width: 100%;
-        margin-top: 0.5rem; /* mt-2 */
-    }
+    /* 按鈕寬度調整 */
     .btn-row button {
         flex: 1 1 50%; /* 讓按鈕平均分配空間 */
+        min-width: 0;
     }
 </style>
 </head>
@@ -91,7 +88,7 @@
 <div class="w-full max-w-lg mx-auto p-4"> 
   <header class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v4.5 💧</h1>
+      <h1 class="text-2xl font-semibold">WaterHero v4.6 💧</h1>
     </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
@@ -123,17 +120,19 @@
           <div id="progressBar" class="h-full bg-sky-400 dark:bg-sky-500 text-right progress-wave" style="width:0%"></div>
         </div>
 
-        <div class="flex items-center gap-3">
-          <input id="addInput" type="number" placeholder="輸入喝水量 (例如 250)" class="flex-1 p-3 rounded-lg border border-slate-200 dark:bg-slate-800">
-          <select id="unitSelect" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-            <option value="ml">ml</option>
-            <option value="cup">杯 (250ml)</option>
-          </select>
-        </div>
+        <div class="flex flex-col gap-3"> 
+          <div class="flex items-center gap-3">
+            <input id="addInput" type="number" placeholder="輸入喝水量 (例如 250)" class="flex-1 p-3 rounded-lg border border-slate-200 dark:bg-slate-800">
+            <select id="unitSelect" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <option value="ml">ml</option>
+              <option value="cup">杯 (250ml)</option>
+            </select>
+          </div>
 
-        <div class="btn-row"> 
+          <div class="btn-row"> 
             <button id="addBtn" class="bg-sky-600 text-white py-3 rounded-lg active:scale-95">加入</button> 
             <button id="undoBtn" class="bg-red-500 text-white py-3 rounded-lg active:scale-95" title="撤銷上一筆記錄">撤銷 ↶</button>
+          </div>
         </div>
     </section>
     </form>
