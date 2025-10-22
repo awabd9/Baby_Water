@@ -1,214 +1,116 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>WaterHero v2.0 — 每日喝水紀錄</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lottie-web@5.10.1/build/player/lottie.min.js"></script>
-
-<style>
-  html, body {
-    margin: 0; padding: 0;
-    overflow-x: hidden; /* 防止橫向滾動 */
-  }
-  .glass {
-    backdrop-filter: blur(8px);
-    background: rgba(255,255,255,0.7);
-  }
-  .dark .glass { background: rgba(17,24,39,0.6); }
-</style>
-</head>
-
-<body class="bg-gradient-to-b from-blue-100 to-blue-200 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 min-h-screen flex justify-center">
-
-  <div class="w-full max-w-md p-4 space-y-4">
-    <!-- 標題 -->
-    <header class="text-center">
-      <h1 class="text-2xl font-bold mb-1">💧 WaterHero</h1>
-      <p class="text-sm text-gray-600 dark:text-gray-400">每日喝水紀錄與挑戰</p>
-    </header>
-
-    <!-- 當日進度 -->
-    <section class="glass p-4 rounded-2xl shadow">
-      <div class="flex justify-between items-center">
-        <span>今日總量</span>
-        <span id="todayTotal" class="font-bold text-lg">0 ml</span>
-      </div>
-      <div class="w-full bg-gray-200 dark:bg-gray-700 h-3 rounded-full mt-2 overflow-hidden">
-        <div id="progressBar" class="h-3 bg-blue-500 transition-all duration-500" style="width:0%"></div>
-      </div>
-      <div class="flex justify-between items-center mt-2 text-sm">
-        <span>目標：<span id="goalValue">2000</span> ml</span>
-        <button id="setGoalBtn" class="text-blue-600 dark:text-blue-400 hover:underline">修改</button>
-      </div>
-    </section>
-
-    <!-- 輸入區 -->
-    <section class="glass p-4 rounded-2xl shadow space-y-2">
-      <label class="block text-sm font-medium">輸入喝水量（ml）</label>
-      <input id="inputAmount" type="number" min="0" class="w-full p-2 rounded-lg text-center text-gray-900 dark:text-gray-800" placeholder="例如 250" />
-      <button id="addBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition">記錄</button>
-      <button id="undoBtn" class="w-full bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-200 py-2 rounded-lg">撤銷上次</button>
-    </section>
-
-    <!-- 徽章 / 動畫 -->
-    <section class="glass p-4 rounded-2xl text-center shadow">
-      <div id="badgeArea" class="flex justify-center items-center">
-        <div id="badgeAnim" class="w-24 h-24"></div>
-      </div>
-      <p id="badgeText" class="mt-2 text-sm text-gray-700 dark:text-gray-300"></p>
-    </section>
-
-    <!-- 七日紀錄 -->
-    <section class="glass p-4 rounded-2xl shadow">
-      <h2 class="font-semibold mb-2">過去 7 天紀錄</h2>
-      <canvas id="chart7d" class="w-full"></canvas>
-    </section>
-
-    <!-- 模式切換 -->
-    <footer class="text-center text-sm text-gray-500">
-      <button id="themeToggle" class="underline">切換主題</button>
-    </footer>
-  </div>
-
-<script>
-const state = {
-  goal: 2000,
-  records: JSON.parse(localStorage.getItem('records') || '{}'),
-  lastIntake: null,
-};
-
-// 初始化
-document.addEventListener('DOMContentLoaded', () => {
-  loadGoal();
-  updateToday();
-  renderChart();
-  initBadge();
-});
-
-// === 功能 ===
-function loadGoal() {
-  const saved = localStorage.getItem('goal');
-  if (saved) state.goal = parseInt(saved);
-  document.getElementById('goalValue').textContent = state.goal;
-}
-
-function saveRecords() {
-  localStorage.setItem('records', JSON.stringify(state.records));
-}
-
-function getTodayKey() {
-  return new Date().toISOString().slice(0,10);
-}
-
-function updateToday() {
-  const key = getTodayKey();
-  const total = state.records[key] || 0;
-  const pct = Math.min(total / state.goal * 100, 100);
-  document.getElementById('todayTotal').textContent = total + ' ml';
-  document.getElementById('progressBar').style.width = pct + '%';
-  checkBadge(total);
-}
-
-function addIntake() {
-  const input = document.getElementById('inputAmount');
-  const val = parseInt(input.value);
-  if (!val || val <= 0) return;
-  const key = getTodayKey();
-  state.records[key] = (state.records[key] || 0) + val;
-  state.lastIntake = val;
-  saveRecords();
-  updateToday();
-  renderChart();
-  input.value = '';
-}
-
-function undoLast() {
-  const key = getTodayKey();
-  if (!state.lastIntake || !state.records[key]) return;
-  state.records[key] = Math.max(0, state.records[key] - state.lastIntake);
-  state.lastIntake = null;
-  saveRecords();
-  updateToday();
-  renderChart();
-}
-
-function setGoal() {
-  const newGoal = parseInt(prompt('輸入新的每日目標（ml）', state.goal));
-  if (newGoal && newGoal > 0) {
-    state.goal = newGoal;
-    localStorage.setItem('goal', newGoal);
-    document.getElementById('goalValue').textContent = newGoal;
-    updateToday();
-  }
-}
-
-// === Chart ===
-let chart;
-function renderChart() {
-  const ctx = document.getElementById('chart7d');
-  const labels = [];
-  const data = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0,10);
-    labels.push(key.slice(5));
-    data.push(state.records[key] || 0);
-  }
-  if (chart) chart.destroy();
-  chart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{ label: '喝水量(ml)', data }]
-    },
-    options: {
-      scales: { y: { beginAtZero: true, suggestedMax: state.goal } },
-      plugins: { legend: { display: false } },
-      responsive: true,
-      maintainAspectRatio: false,
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>WaterHero v2.1 — 每日喝水紀錄</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    body {
+      @apply bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+      overflow-x: hidden;
     }
-  });
-}
+    .glass {
+      backdrop-filter: blur(6px);
+      background: rgba(255,255,255,0.6);
+    }
+    .dark .glass {
+      background: rgba(17,24,39,0.55);
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center min-h-screen p-4">
+  <main class="glass rounded-2xl shadow-xl w-full max-w-md p-4 space-y-4 overflow-hidden">
+    <h1 class="text-2xl font-bold text-center">💧 WaterHero</h1>
 
-// === 徽章 / 動畫 ===
-function initBadge() {
-  const badge = lottie.loadAnimation({
-    container: document.getElementById('badgeAnim'),
-    renderer: 'svg',
-    loop: false,
-    autoplay: false,
-    path: 'https://assets7.lottiefiles.com/packages/lf20_touohxv0.json'
-  });
-  state.badgeAnim = badge;
-}
+    <div>
+      <label class="block text-sm mb-1">今日目標 (ml)</label>
+      <input id="goalInput" type="number" class="w-full border rounded p-2 text-gray-900" value="2000" />
+    </div>
 
-function checkBadge(total) {
-  const text = document.getElementById('badgeText');
-  if (total >= state.goal) {
-    text.textContent = '🏆 你達成了今日目標！';
-    state.badgeAnim?.goToAndPlay(0);
-  } else if (total >= state.goal * 0.5) {
-    text.textContent = '🔥 加油！已達一半';
-  } else {
-    text.textContent = '💧 保持補水';
-  }
-}
+    <div class="flex items-center space-x-2">
+      <input id="intakeInput" type="number" placeholder="輸入 ml" class="flex-1 border rounded p-2 text-gray-900" />
+      <button id="addBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">＋紀錄</button>
+    </div>
 
-// === 主題切換 ===
-document.getElementById('themeToggle').addEventListener('click', () => {
-  document.body.classList.toggle('dark');
-});
+    <div class="text-center">
+      <p id="totalDisplay" class="text-lg font-semibold">今日總量：0 ml</p>
+      <div class="w-full bg-gray-300 rounded-full h-4">
+        <div id="progressBar" class="bg-blue-500 h-4 rounded-full" style="width:0%"></div>
+      </div>
+    </div>
 
-// === 事件綁定 ===
-document.getElementById('addBtn').addEventListener('click', addIntake);
-document.getElementById('undoBtn').addEventListener('click', undoLast);
-document.getElementById('setGoalBtn').addEventListener('click', setGoal);
-</script>
+    <div>
+      <canvas id="chart" class="w-full h-48"></canvas>
+    </div>
 
+    <div class="text-center text-sm text-gray-500">持續紀錄喝水，每天更健康 🩵</div>
+  </main>
+
+  <script>
+    const goalInput = document.getElementById("goalInput");
+    const intakeInput = document.getElementById("intakeInput");
+    const addBtn = document.getElementById("addBtn");
+    const totalDisplay = document.getElementById("totalDisplay");
+    const progressBar = document.getElementById("progressBar");
+    const ctx = document.getElementById("chart");
+
+    let dailyData = JSON.parse(localStorage.getItem("waterData") || "{}");
+    const today = new Date().toISOString().slice(0,10);
+    if(!dailyData[today]) dailyData[today] = 0;
+
+    function updateUI() {
+      const goal = parseInt(goalInput.value) || 2000;
+      const total = dailyData[today] || 0;
+      const percent = Math.min((total / goal) * 100, 100);
+      totalDisplay.textContent = `今日總量：${total} ml`;
+      progressBar.style.width = percent + "%";
+      localStorage.setItem("waterData", JSON.stringify(dailyData));
+      updateChart();
+    }
+
+    addBtn.onclick = () => {
+      const add = parseInt(intakeInput.value);
+      if(isNaN(add) || add <= 0) return;
+      dailyData[today] = (dailyData[today] || 0) + add;
+      intakeInput.value = "";
+      updateUI();
+    };
+
+    let chart;
+    function updateChart() {
+      const labels = Object.keys(dailyData).slice(-7);
+      const data = labels.map(k => dailyData[k]);
+      if(chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{ label: "每日喝水量 (ml)", data }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // 🩵 修正 Safari 無限延伸問題
+    function fixChartSize() {
+      if (chart) {
+        chart.resize();
+      }
+    }
+
+    window.addEventListener("resize", fixChartSize);
+    window.addEventListener("orientationchange", fixChartSize);
+    window.addEventListener("load", () => {
+      setTimeout(fixChartSize, 200);
+      updateUI();
+    });
+  </script>
 </body>
 </html>
