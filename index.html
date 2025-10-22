@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v3.1 — 每日喝水紀錄（最終穩定版）</title>
+<title>WaterHero v3.1 — 每日喝水紀錄（手機優先版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -16,7 +16,7 @@
     *::after {
         box-sizing: border-box;
     }
-    /* 核心佈局鎖定：確保 BODY 無邊界、無溢出 */
+    /* 核心佈局鎖定：確保 BODY 無邊界、無溢出，並強制置中 */
     body {
         margin: 0;
         padding: 0;
@@ -24,6 +24,7 @@
         display: flex;
         justify-content: center; /* 讓主容器強制置中 */
         min-height: 100vh;
+        width: 100%; /* 確保 body 佔滿視口 */
     }
     
   .glass { backdrop-filter: blur(6px); background: rgba(255,255,255,0.65); }
@@ -80,15 +81,17 @@
 <div id="toast"></div>
 
 <div class="app-container">
-  <header class="flex items-center justify-between mb-4">     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v2.4 💧</h1>
+  <header class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold">WaterHero v3.1 💧</h1>
     </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
     </div>
   </header>
 
-    <main class="grid gap-3 md:grid-cols-2">     <form id="addForm" onsubmit="event.preventDefault();" novalidate class="md:col-span-2"> 
+  <main class="grid gap-4 md:grid-cols-2">
+    <form id="addForm" onsubmit="event.preventDefault();" novalidate class="md:col-span-2"> 
     <section class="p-4 rounded-2xl glass shadow">
         <div class="flex justify-between items-center mb-3">
           <div>
