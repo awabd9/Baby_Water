@@ -2,8 +2,8 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no" /> 
-<title>WaterHero v3.3 — 每日喝水紀錄（最終穩定版）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" /> 
+<title>WaterHero v3.5 — 每日喝水紀錄（最終穩定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -74,11 +74,6 @@
             padding: 1.5rem; /* 桌面邊距恢復 */
         }
     }
-    /* 修正澆花/徽章的標題對齊 */
-    .text-center-force {
-        text-align: center !important;
-        width: 100%;
-    }
 </style>
 </head>
 <body class="bg-gradient-to-b from-sky-50 to-white dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 min-h-screen">
@@ -135,7 +130,7 @@
     </form>
 
         <section class="p-4 rounded-2xl glass shadow">
-      <h3 class="font-semibold text-lg mb-3 text-center-force">💧 澆花挑戰：累積與成長</h3>
+      <h3 class="font-semibold text-lg mb-3 text-center">💧 澆花挑戰：累積與成長</h3>
       <div class="flex justify-around items-end h-48">
         <div class="water-bucket-wrapper">
           <div id="waterLevel" class="water-level"></div>
@@ -152,7 +147,7 @@
     </section>
 
         <section class="p-4 rounded-2xl glass shadow grid gap-3">
-      <h3 class="font-semibold text-lg text-center-force">🏆 徽章與等級</h3>
+      <h3 class="font-semibold text-lg text-center">🏆 徽章與等級</h3>
       <div class="flex items-center justify-between">
         <div>
           <div class="text-sm text-slate-500 dark:text-slate-300">水瓶名稱</div>
