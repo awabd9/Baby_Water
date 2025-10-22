@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v2.9 — 每日喝水紀錄（最終穩定版）</title>
+<title>WaterHero v3.0 — 每日喝水紀錄（終極穩定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -68,6 +68,10 @@
         box-sizing: border-box;
         padding: 1rem; /* 手機基礎邊距 */
     }
+    /* 修復輸入區在手機上的最小寬度溢出 */
+    .input-controls {
+        flex-shrink: 0;
+    }
     @media (min-width: 768px) {
         .app-container {
             padding: 1.5rem; /* 桌面邊距 */
@@ -82,14 +86,14 @@
 <div class="app-container">
   <header class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold">WaterHero v2.7 💧</h1>
+      <h1 class="text-2xl font-semibold">WaterHero v3.0 💧</h1>
     </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" class="px-3 py-2 rounded-lg glass">提醒</button>
     </div>
   </header>
 
-    <main class="grid gap-4 md:grid-cols-2">
+  <main class="grid gap-4 md:grid-cols-2">
     <form id="addForm" onsubmit="event.preventDefault();" novalidate class="md:col-span-2"> 
     <section class="p-4 rounded-2xl glass shadow">
         <div class="flex justify-between items-center mb-3">
@@ -116,7 +120,7 @@
 
         <div class="flex items-center gap-3">
           <input id="addInput" type="number" placeholder="輸入喝水量 (例如 250)" class="flex-1 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-          <div class="flex items-center gap-2 whitespace-nowrap">
+          <div class="flex items-center gap-2 whitespace-nowrap input-controls">
             <select id="unitSelect" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <option value="ml">ml</option>
               <option value="cup">杯 (250ml)</option>
