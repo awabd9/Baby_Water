@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>WaterHero v3.1 — 每日喝水紀錄（佈局最終穩定版）</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no" /> 
+<title>WaterHero v3.2 — 每日喝水紀錄（最終穩定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -14,27 +14,18 @@
   * {
     box-sizing: border-box;
   }
-  html, body {
+  body {
     margin: 0;
     padding: 0;
-    width: 100%;
-    overflow-x: hidden; /* 徹底鎖定橫向溢出 */
-    /* 保持 WaterHero 原有風格的背景漸變 */
-    background-image: linear-gradient(to bottom, #eff6ff, #ffffff);
+    overflow-x: hidden; 
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
   }
-  .dark body {
-    background-image: linear-gradient(to bottom, #0f172a, #1e293b);
-    color: #f8fafc;
-  }
-  .glass {
-    backdrop-filter: blur(8px);
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 1rem;
-  }
-  .dark .glass {
-    background: rgba(17,24,39,0.7);
-  }
-
+    
+  .glass { backdrop-filter: blur(6px); background: rgba(255,255,255,0.65); }
+  .dark .glass { background: rgba(17,24,39,0.55); }
   .badge-anim { width: 92px; height: 92px; }
   .progress-wave { background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0)); }
 
@@ -46,14 +37,35 @@
   .dark .flower-garden { background:#1a202c; border-color:#4a5568; }
   .flower-unit { font-size:2em; margin:3px; cursor:default; line-height:1; }
   #gardenMessage { font-size:0.9em; color:#999; padding-top:50px; text-align:center; width:100%; }
+  /* Toast */
+  #toast { 
+        position: fixed; 
+        right: 20px; 
+        bottom: 24px; 
+        z-index: 9999; 
+        display:flex; 
+        flex-direction:column; 
+        gap:8px; 
+        max-width: 90%; 
+        top: auto; 
+        left: auto;
+    }
+  .toast-item { 
+        background: rgba(0,0,0,0.8); 
+        color: #fff; 
+        padding:10px 14px; 
+        border-radius:8px; 
+        min-width:160px; 
+        box-shadow: 0 6px 18px rgba(0,0,0,0.2); 
+        font-size:14px; 
+    }
 </style>
 </head>
-
-<body class="flex flex-col items-center p-4 min-h-screen text-slate-800 dark:text-slate-100">
+<body class="bg-gradient-to-b from-sky-50 to-white dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 min-h-screen">
 
 <div id="toast"></div>
 
-<div class="w-full max-w-lg">
+<div class="w-full max-w-lg mx-auto p-4"> 
   <header class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-2xl font-semibold">WaterHero v3.1 💧</h1>
@@ -63,7 +75,7 @@
     </div>
   </header>
 
-    <main class="grid gap-4 md:grid-cols-2">
+  <main class="grid gap-4 md:grid-cols-2">
     <form id="addForm" onsubmit="event.preventDefault();" novalidate class="md:col-span-2"> 
     <section class="p-4 rounded-2xl glass shadow">
         <div class="flex justify-between items-center mb-3">
@@ -595,7 +607,7 @@ function render(){
   if(waterLevelDisplay) waterLevelDisplay.style.height = `${levelPercentage}%`;
 
   if (waterFlowerBtn) {
-    if ((state.meta.bucketAmount || 0) >= WATER_NEEDED_FOR_FLOWER){
+    if ((state.meta.bucketAmount || 0) >= WATER_NEEDED_FORS_FLOWER){
       waterFlowerBtn.disabled = false;
       waterFlowerBtn.title = `點擊澆花 (${WATER_NEEDED_FOR_FLOWER} ml)`;
     } else {
