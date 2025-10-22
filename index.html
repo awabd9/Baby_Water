@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WaterHero v3.1 — 每日喝水紀錄（最終穩定版）</title>
+<title>WaterHero v3.1 — 每日喝水紀錄（佈局鎖定版）</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -16,7 +16,7 @@
     *::after {
         box-sizing: border-box;
     }
-    /* 核心佈局鎖定：確保 BODY 無邊界、無溢出 */
+    /* 核心佈局鎖定：確保 BODY 無邊界、無溢出，並強制置中 */
     body {
         margin: 0;
         padding: 0;
@@ -24,7 +24,7 @@
         display: flex;
         justify-content: center; /* 讓主容器強制置中 */
         min-height: 100vh;
-        width: 100%; /* 確保 body 佔滿視口 */
+        width: 100%;
     }
     
   .glass { backdrop-filter: blur(6px); background: rgba(255,255,255,0.65); }
@@ -80,7 +80,7 @@
 
 <div id="toast"></div>
 
-<div class="app-container">
+<div class="app-container" style="max-width: 100% !important; margin-left: 0 !important; margin-right: 0 !important;">
   <header class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-2xl font-semibold">WaterHero v3.1 💧</h1>
@@ -116,15 +116,14 @@
         </div>
 
         <div class="flex items-center gap-3">
-          <input id="addInput" type="number" placeholder="輸入喝水量 (例如 250)" 
-             class="flex-1 p-3 rounded-lg border border-slate-200 dark:border-slate-700 
-             bg-white dark:bg-slate-800 text-lg h-12" > <div class="flex items-center gap-2 whitespace-nowrap">
-            <select id="unitSelect" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 
-              bg-white dark:bg-slate-800 text-lg h-12"> <option value="ml">ml</option>
+          <input id="addInput" type="number" placeholder="輸入喝水量 (例如 250)" class="flex-1 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+          <div class="flex items-center gap-2 whitespace-nowrap">
+            <select id="unitSelect" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <option value="ml">ml</option>
               <option value="cup">杯 (250ml)</option>
             </select>
-            <button id="addBtn" class="px-4 py-2.5 rounded-lg bg-sky-600 text-white text-lg h-12">加入</button> 
-            <button id="undoBtn" class="px-3 py-2.5 rounded-lg bg-red-500 text-white text-lg h-12" title="撤銷上一筆記錄">↶</button>
+            <button id="addBtn" class="px-4 py-3 rounded-lg bg-sky-600 text-white">加入</button>
+            <button id="undoBtn" class="px-3 py-3 rounded-lg bg-red-500 text-white" title="撤銷上一筆記錄">↶</button>
           </div>
         </div>
     </section>
