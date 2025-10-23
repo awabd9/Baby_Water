@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>WaterHero 6.2 — 每日喝水紀錄（手機單頁）</title>
-
+<title>WaterHero 6.3 — 每日喝水紀錄（手機單頁）</title>
 <!-- Tailwind CDN for quick styling -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- Chart.js -->
@@ -137,11 +136,11 @@
       <section class="glass">
         <h3 class="small font-semibold mb-2">系統設定</h3>
         <div class="flex items-center gap-2 mb-3">
-          <div style="width:150px">
+          <div style="width:160px">
             <div class="small">每日目標 (ml)</div>
             <input id="goalInput" type="number" min="100" class="border rounded-lg px-3 py-2 mt-1" value="2000">
           </div>
-          <div style="width:150px">
+          <div class="flex-1">
             <div class="small">提醒 (分鐘)</div>
             <input id="reminderMinutes" type="number" min="10" class="border rounded-lg px-3 py-2 mt-1 w-full" value="120">
           </div>
@@ -601,6 +600,7 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
 
